@@ -117,7 +117,7 @@ export async function uploadAudioAsset?(path: string): Promise<{ assetId: string
 **Invariants**
 - `generateVideo` validates `mode` against `avatar.tier` compatibility (derived from HeyGen capabilities discovered during research). Callers see a domain `IncompatibleModeError` before a request is sent.
 - `getVideoStatus` returns the provider's raw status strings mapped into the closed set above; unknown values propagate as `{ status: 'failed', error: ... }`.
-- If `uploadAudioAsset` is undefined at runtime, the pipeline falls through to the configured transport (S3/R2/cloudflared).
+- `uploadAudioAsset` is required for the default `'heygen'` transport. If it is unavailable at runtime, the resolver falls through to S3/R2/cloudflared.
 
 ## `src/providers/remotion.ts`
 
@@ -156,7 +156,7 @@ export async function renderMedia(r: RenderRequest): Promise<{ durationSeconds: 
 The audio-upload transport abstraction.
 
 ```ts
-export type TransportKind = 's3' | 'r2' | 'cloudflared' | 'direct';
+export type TransportKind = 'heygen' | 's3' | 'r2' | 'cloudflared';
 
 export interface Transport {
   readonly kind: TransportKind;
@@ -172,7 +172,7 @@ export function resolve(project: { uploadTransport?: TransportKind }): Transport
 ```
 
 **Invariants**
-- `resolve` picks in order: per-project override → app default → first available among `['s3','r2','direct','cloudflared']`.
-- `direct` is only returned if `heygen.uploadAudioAsset` exists at runtime.
+- `resolve` picks in order: per-project override → app default (`'heygen'`) → first available among `['heygen','s3','r2','cloudflared']`.
+- `'heygen'` is only returned if `heygen.uploadAudioAsset` exists at runtime; otherwise the resolver skips past it to S3/R2/cloudflared.
 - Every `cleanup` returned MUST be invoked after HeyGen either confirms pickup
   or terminally fails.

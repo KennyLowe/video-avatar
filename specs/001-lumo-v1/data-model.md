@@ -37,7 +37,7 @@ document is the contract between the spec and the implementation.
 | `logoPath` | relative path | Optional, relative to project root. |
 | `defaultVoiceId` | integer | FK to `voices.id` in project state.db, nullable. |
 | `defaultAvatarId` | integer | FK to `avatars.id` in project state.db, nullable. |
-| `uploadTransport` | enum | `s3` \| `r2` \| `cloudflared` \| `direct`. Overrides app-global default. |
+| `uploadTransport` | enum | `heygen` \| `s3` \| `r2` \| `cloudflared`. Overrides app-global default. |
 
 **Invariants**
 - `slug` matches `^[a-z0-9][a-z0-9-]{0,63}$`. Renames rewrite `project.json` only; the folder is never moved underneath the operator.
@@ -214,10 +214,10 @@ Not a row; a selected enum plus any dependent config.
 
 | Value | Dependent config |
 |-------|------------------|
+| `heygen` | None. Uploads audio to `upload.heygen.com/v1/asset` and references by `audio_asset_id`. Default. |
 | `s3` | Bucket, region, path prefix, credentials target `Lumo/s3`. |
 | `r2` | Same shape as `s3`, different endpoint. |
 | `cloudflared` | Binary path (resolved at startup; override in settings). |
-| `direct` | None. Only usable if HeyGen's current API accepts multipart audio. |
 
 ## Cross-entity invariants
 

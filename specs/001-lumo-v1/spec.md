@@ -108,7 +108,7 @@ The operator manages multiple projects, sees month-to-date spend per provider, r
 
 **Setup and credentials**
 
-- **FR-001**: The system MUST verify at launch that the Claude Code CLI is installed and authenticated (`claude --version`) without requesting any Anthropic credential from the operator, and MUST block all other features until verified.
+- **FR-001**: The system MUST verify at launch that the Claude Code CLI is both (a) **installed** — by executing `claude --version` — and (b) **authenticated** — by executing a trivial `claude --print --output-format json` prompt with a 5-second timeout and classifying the outcome: a valid JSON response on stdout means authenticated; a non-zero exit whose stderr matches a known auth-failure signature (e.g., "not logged in", "401", "unauthorized") means not authenticated; any other non-zero exit is treated as authenticated with a soft warning. The system MUST NOT request an Anthropic credential from the operator. On `installed=false` or `authenticated=false`, Home renders a non-dismissible banner with the exact shell command to fix (`winget install Anthropic.Claude` or `claude /login`) and MUST block all other features until a Recheck succeeds.
 - **FR-002**: The system MUST request each paid-provider API key (ElevenLabs, HeyGen) progressively at the point of first use, not in a monolithic onboarding form.
 - **FR-003**: The system MUST store provider API keys in the Windows Credential Manager under named targets (`Lumo/elevenlabs`, `Lumo/heygen`), never in configuration files, environment files, or logs.
 - **FR-004**: The system MUST provide a Test action on each key-entry screen that makes a lightweight authenticated call to the provider and reports plan name and/or month-to-date usage when the provider exposes them.
@@ -146,7 +146,12 @@ The operator manages multiple projects, sees month-to-date spend per provider, r
 - **FR-024**: The system MUST accept drag-and-drop import for each tier's accepted types (images for Photo Avatar; MP4/MOV/WebM for Instant Avatar) and MUST display probe metadata (duration, resolution, frame rate, codec, file size) for videos.
 - **FR-025**: The system MUST let the operator mark 1–N (in, out) segments per source video and extract each segment to disk without re-encoding where possible.
 - **FR-026**: The system MUST offer a "grab frame from video" tool for Photo Avatar, producing a PNG from any point in an imported clip.
-- **FR-027**: The system MUST run pre-upload quality heuristics: resolution, face-detection coverage, multi-face detection, and motion/sharpness estimates; failures MUST be informational warnings that the operator can override.
+- **FR-027**: The system MUST run pre-upload quality heuristics and present any failure as an informational warning that the operator can override. Concrete thresholds:
+  - **Resolution**: warn if video short-edge < 1080 px; warn if image short-edge < 1024 px.
+  - **Face-detection coverage**: for video, sample 1 frame per second (cap 60 samples) and warn if fewer than 90% contain exactly one detected face; warn separately if any sampled frame detects more than one face. For image, reject (not warn) if no face or multiple faces are detected.
+  - **Motion**: for video, warn if the mean inter-frame pixel delta across sampled frames exceeds 15% of image area — indicates camera shake or background movement.
+  - **Sharpness**: warn if Laplacian variance < 120 (applied to imported images, and to the middle frame of each selected video segment).
+  All warnings are informational and overridable; rejections (multi-face on a Photo Avatar) are blocking.
 - **FR-028**: The system MUST persist the avatar training job with `kind='avatar_train'` and `tier` set, and MUST fire a completion notification with the trained `avatar_id` written to the avatars table.
 - **FR-029**: The system MUST provide a 5-second preview of the trained avatar saying a canned phrase in the project's voice or a default HeyGen voice.
 
@@ -155,8 +160,13 @@ The operator manages multiple projects, sees month-to-date spend per provider, r
 - **FR-030**: The Generate screen MUST require the operator to pick a voice, an avatar, a script, and a generation mode (Standard or Avatar IV) before the Run action becomes enabled.
 - **FR-031**: The system MUST disable generation modes incompatible with the selected avatar tier, with an inline explanation of why.
 - **FR-032**: Before the operator confirms a paid run, the system MUST display a cost preview showing ElevenLabs character count and credit burn, HeyGen estimated minutes and credit burn (including the Avatar IV premium-credit multiplier), total USD estimate, month-to-date per provider, and plan headroom.
-- **FR-033**: Run pipeline MUST execute in order: TTS synthesis to a local file; upload of the audio via the configured transport (S3/R2, cloudflared tunnel, or direct if supported); HeyGen video-generation call with `avatar_id` and audio URL; background polling until completion; download of the resulting MP4 into `video/avatar/`.
-- **FR-034**: The audio-upload transport MUST be configurable per project with at least S3/R2, local cloudflared tunnel, and direct-upload (where HeyGen supports it) as options.
+- **FR-033**: Run pipeline MUST execute in order: TTS synthesis to a local file; upload of the audio via the configured transport (default `heygen`, falling through to `s3`, `r2`, or `cloudflared` per FR-034); HeyGen video-generation call with `avatar_id` and the transport's returned audio reference (`audio_asset_id` or URL); background polling until completion; download of the resulting MP4 into `video/avatar/`.
+- **FR-034**: The audio-upload transport MUST be configurable per project with the following named options:
+  - **`heygen`** (default): upload to `upload.heygen.com/v1/asset` and reference by `audio_asset_id`.
+  - **`s3`**: operator-owned S3 bucket; system returns a short-TTL pre-signed URL.
+  - **`r2`**: same shape as `s3`, Cloudflare R2 endpoint.
+  - **`cloudflared`**: ephemeral local HTTP server exposed via `cloudflared tunnel run --url`.
+  The resolver tries the configured default first, then falls back in the order above. The term `direct` is not a valid option name — it is ambiguous with "generate-call multipart" (which HeyGen does not support) and is not used anywhere in the codebase.
 - **FR-035**: A completed avatar video MUST offer an inline preview with a Regenerate action that warns of repeat cost, and an Approve-and-continue action that advances to the Compose screen.
 
 **Composition studio**
@@ -167,7 +177,7 @@ The operator manages multiple projects, sees month-to-date spend per provider, r
 - **FR-039**: The prompt-to-props flow MUST convert the template's Zod schema to JSON Schema, send the JSON Schema + default props + operator prompt to Claude Code, and validate the returned JSON with `schema.parse()` before use.
 - **FR-040**: On `schema.parse()` failure the system MUST retry once with the validation error appended to the prompt, and on second failure MUST surface the error and open a JSON editor for manual prop editing. The system MUST NEVER execute or evaluate model-generated code.
 - **FR-041**: The Composition screen MUST embed an interactive preview with play/pause, scrub, and live props editing, and MUST render output via the Remotion renderer into `renders/<slug>-<timestamp>.mp4`.
-- **FR-042**: Render settings MUST include resolution (1080p30 default, 1080p60, 4K30), codec (h264, h265), quality preset (fast/balanced/quality), and audio bitrate, and renders MUST be cancellable.
+- **FR-042**: Render settings MUST include resolution (1080p30 default, 1080p60, 4K30), codec (h264 default, h265), audio bitrate (192 kbit/s AAC default), and a quality preset that maps to ffmpeg flags as follows: **fast** = `{ffmpegPreset: 'veryfast', crf: 26}`; **balanced** = `{ffmpegPreset: 'medium', crf: 22}`; **quality** = `{ffmpegPreset: 'slow', crf: 18}`. For h265 the same mapping applies with matching h265 presets. Renders MUST be cancellable, and a cancelled render MUST leave no partial file behind.
 
 **Jobs, notifications, and persistence**
 
@@ -216,14 +226,14 @@ The operator manages multiple projects, sees month-to-date spend per provider, r
 - **Job**: A persistent record of a long-running external operation. Attributes: provider, provider job id, kind (`voice_train`|`avatar_train`|`tts`|`avatar_video`|`render`), input reference, output path, status, last-polled-at, error, created-at.
 - **Cost entry**: A row on the ledger recording a paid operation. Attributes: linked job, provider, operation, units, unit kind (`characters`|`credits`|`seconds`), USD estimate, recorded-at.
 - **Credential target**: A named entry in the Windows Credential Manager holding a provider API key. Targets: `Lumo/elevenlabs`, `Lumo/heygen`.
-- **Upload transport configuration**: Per-project selection between S3/R2 (with operator-owned bucket creds), local cloudflared tunnel, or direct provider upload where supported. Used to make TTS audio reachable by HeyGen.
+- **Upload transport configuration**: Per-project selection among `heygen` (default; uploads to HeyGen's asset store), `s3` / `r2` (operator-owned bucket, pre-signed URL), and `cloudflared` (local tunnel). Used to make TTS audio reachable by HeyGen.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
 - **SC-001**: A cold operator on a fresh Windows 11 machine, with Claude Code already authenticated and accounts with ElevenLabs and HeyGen, can complete the end-to-end path (install → keys → record voice → train PVC → train avatar → generate script → produce lip-synced MP4 → compose intro/outro → export final MP4) within a single working day without opening a terminal, editing a config file, or moving files by hand.
-- **SC-002**: Between the moment the operator clicks Run on the Generate screen and the moment an approved lip-synced MP4 is playable in-app, the operator performs no manual filesystem step and sees progress, an ETA, or a "typically takes N minutes" hint at all times.
+- **SC-002**: Between the moment the operator clicks Run on the Generate screen and the moment an approved lip-synced MP4 is playable in-app, the operator performs no manual filesystem step. Every asynchronous operation expected to exceed 5 seconds MUST display exactly one of (a) a linear progress indicator with percentage, (b) a numeric ETA derived from the provider's reported progress, or (c) a "typically takes N minutes" hint sourced from observed provider averages. This is a structural contract enforced by a shared `AsyncFeedback` component type, not a manual inspection.
 - **SC-003**: When the app is closed mid-training, 100% of in-flight long-running jobs reappear in the jobs tray with correct status on next launch, and complete to the same final state they would have reached if the app had stayed open.
 - **SC-004**: Every paid operation displays a cost preview with USD estimate and month-to-date before it runs; the operator can abandon the operation from the preview screen at zero cost.
 - **SC-005**: Every error surfaced by the app names the provider, includes the provider's verbatim message, and proposes at least one specific next step. Zero occurrences of generic "Something went wrong" text in shipped UI strings.

@@ -80,7 +80,7 @@ applicable — the live-documentation sources consulted.
 
 ## 4. Audio-upload transport for HeyGen video generation
 
-**Decision**: Default transport is **HeyGen's own Upload Asset API** (`POST https://upload.heygen.com/v1/asset`, raw binary) referenced by `audio_asset_id`. Fallback order: HeyGen upload → operator-owned S3/R2 pre-signed URL → cloudflared tunnel.
+**Decision**: Default transport kind is **`'heygen'`** — upload audio to `POST https://upload.heygen.com/v1/asset` (raw binary) and reference by `audio_asset_id`. Fallback order by `TransportKind`: `'heygen'` → `'s3'` → `'r2'` → `'cloudflared'`. The former term `'direct'` is not used anywhere in the codebase — it was ambiguous with "generate-call multipart," which HeyGen does not support.
 
 **Rationale**
 

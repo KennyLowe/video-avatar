@@ -131,7 +131,7 @@ src/
 │   │   ├── claudeCode.ts
 │   │   ├── elevenlabs.ts
 │   │   ├── heygen.ts
-│   │   ├── transport.ts           # s3 | r2 | cloudflared | direct
+│   │   ├── transport.ts           # heygen (default) | s3 | r2 | cloudflared
 │   │   └── remotion.ts            # bundler + renderer
 │   ├── data/                      # SQLite layer
 │   │   ├── db.ts                  # per-project connection pool
@@ -150,11 +150,10 @@ src/
 │   ├── workers/
 │   │   ├── jobQueue.ts            # polls jobs with exponential back-off
 │   │   ├── reconciler.ts          # on-launch reconciliation against each provider
-│   │   └── handlers/              # one per job kind
+│   │   └── handlers/              # one per long-running job kind
 │   │       ├── voiceTrain.ts
 │   │       ├── avatarTrain.ts
-│   │       ├── tts.ts
-│   │       ├── avatarVideo.ts
+│   │       ├── avatarVideo.ts     # orchestrates TTS → upload → lip-sync → download in one job
 │   │       └── render.ts
 │   ├── services/                  # higher-order orchestration
 │   │   ├── costEstimator.ts
