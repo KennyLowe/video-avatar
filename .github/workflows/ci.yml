@@ -57,19 +57,31 @@ jobs:
             exit 1
           fi
 
-      # Playwright-Electron is best-effort in CI. A failure here does not fail
-      # the build in v1 — we still guard it with a warning so regressions are
-      # visible in the run summary.
+      # Build + UI tests only run once there is actual source to build. Per
+      # constitution §Governance → "Continuous integration gate", we prefer
+      # skipping a step over letting it fail under continue-on-error
+      # indefinitely. `src/main/bootstrap.ts` is the Phase 2 Foundational
+      # entry point; its existence is the signal that there is something
+      # worth building and UI-testing.
+      - name: Detect whether source exists to build
+        id: source-check
+        shell: bash
+        run: |
+          if [ -f "src/main/bootstrap.ts" ]; then
+            echo "has_source=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_source=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::src/main/bootstrap.ts not present yet; skipping build and UI smoke tests until Phase 2 lands the entry point."
+          fi
+
       - name: Build Electron app (for UI tests)
-        id: build-electron
-        continue-on-error: true
+        if: steps.source-check.outputs.has_source == 'true'
         run: npm run build
 
       - name: Install Playwright browsers
-        if: steps.build-electron.outcome == 'success'
+        if: steps.source-check.outputs.has_source == 'true'
         run: npx playwright install chromium
 
       - name: UI smoke tests
-        if: steps.build-electron.outcome == 'success'
-        continue-on-error: true
+        if: steps.source-check.outputs.has_source == 'true'
         run: npm run test:ui
