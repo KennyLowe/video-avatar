@@ -1,0 +1,44 @@
+appId: com.kennylowe.lumo
+productName: Lumo
+copyright: Copyright © 2026 Kenny Lowe
+asar: true
+asarUnpack:
+  - resources/**
+  - node_modules/better-sqlite3/**
+  - node_modules/keytar/**
+  - node_modules/ffmpeg-static/**
+  - node_modules/ffprobe-static/**
+directories:
+  buildResources: build
+  output: out
+files:
+  - dist/**
+  - package.json
+  - '!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}'
+  - '!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}'
+  - '!**/*.map'
+extraResources:
+  - from: resources/templates
+    to: templates
+    filter: ['**/*']
+  - from: resources/face-api
+    to: face-api
+    filter: ['**/*']
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: Lumo-Setup-${version}.${ext}
+  icon: build/icons/icon.ico
+nsis:
+  oneClick: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Lumo
+# Auto-update is off for v1 per constitutional Non-negotiable. Releases ship as
+# manual operator-initiated installers; no publish provider is configured.
+publish: null
+electronVersion: 32.0.0

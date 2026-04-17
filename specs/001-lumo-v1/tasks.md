@@ -37,21 +37,21 @@ Electron single-repo layout per `plan.md`:
 
 **Purpose**: Initialise the repository, dependency graph, and tooling so every later task has a working project to land in.
 
-- [ ] T001 Create the top-level source tree (`src/main/`, `src/preload/`, `src/renderer/`, `src/shared/`, `resources/templates/`, `tests/{contract,integration,ui,fixtures}/`, `build/`) in `S:/video-avatar/`
-- [ ] T002 Initialise `S:/video-avatar/package.json` with name, version, author, main=`dist/main/bootstrap.js`, scripts (`dev`, `build`, `test`, `lint`, `package`) and engines.node ≥ 20
-- [ ] T003 Add runtime dependencies to `S:/video-avatar/package.json`: `electron`, `react`, `react-dom`, `better-sqlite3`, `keytar`, `zod`, `zod-to-json-schema`, `@remotion/player`, `@remotion/renderer`, `@remotion/bundler`, `@vladmandic/face-api`, `ffmpeg-static`, `ffprobe-static`, `monaco-editor`, `@monaco-editor/react`, `uuid`, `nanoid`, `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`
-- [ ] T004 Add dev dependencies: `typescript`, `@types/node`, `@types/react`, `@types/react-dom`, `vite`, `@vitejs/plugin-react`, `electron-builder`, `electron-vite`, `vitest`, `@playwright/test`, `playwright-electron`, `eslint`, `@typescript-eslint/eslint-plugin`, `@typescript-eslint/parser`, `eslint-plugin-react`, `eslint-plugin-react-hooks`, `prettier`
-- [ ] T005 [P] Create `S:/video-avatar/tsconfig.json` (strict, noUncheckedIndexedAccess, target ES2022, paths for `@main/*`, `@renderer/*`, `@shared/*`)
-- [ ] T006 [P] Create `S:/video-avatar/electron.vite.config.ts` with separate main, preload, and renderer configs pointing at their trees
-- [ ] T007 [P] Create `S:/video-avatar/.eslintrc.cjs` with TypeScript, React, and Prettier plugins
-- [ ] T008 [P] Add a custom ESLint rule in `S:/video-avatar/.eslint-rules/no-inline-fetch.cjs` that forbids `fetch(` outside `src/main/providers/**`
-- [ ] T009 [P] Add an ESLint rule in `S:/video-avatar/.eslint-rules/no-string-concat-paths.cjs` that flags string literals joined to path-like variables, reinforcing Non-negotiable #6
-- [ ] T010 [P] Create `S:/video-avatar/.prettierrc` (single-quotes, trailing comma all, print width 100)
-- [ ] T011 [P] Add `S:/video-avatar/build/electron-builder.yml` (productName `Lumo`, win target `nsis`, `extraResources` includes `resources/templates` and `ffmpeg-static` binary, `publish: null` to disable auto-update)
-- [ ] T012 [P] Add `S:/video-avatar/vitest.config.ts` with environment `node` for contract/integration and `jsdom` for renderer unit tests
-- [ ] T013 [P] Add `S:/video-avatar/playwright.config.ts` for Playwright-Electron with a single Windows project
-- [ ] T014 [P] Add `S:/video-avatar/.github/workflows/ci.yml` running on windows-latest: install, lint, typecheck, vitest, and a best-effort Playwright run (skip if binary build fails)
-- [ ] T015 [P] Create a minimal `S:/video-avatar/README.md` pointing to `specs/001-lumo-v1/quickstart.md` for operator setup and `CLAUDE.md` for contributor context
+- [X] T001 Create the top-level source tree (`src/main/`, `src/preload/`, `src/renderer/`, `src/shared/`, `resources/templates/`, `tests/{contract,integration,ui,fixtures}/`, `build/`) in `S:/video-avatar/`
+- [X] T002 Initialise `S:/video-avatar/package.json` with name, version, author, main=`dist/main/bootstrap.js`, scripts (`dev`, `build`, `test`, `lint`, `package`) and engines.node ≥ 20
+- [X] T003 Add runtime dependencies to `S:/video-avatar/package.json`: `electron`, `react`, `react-dom`, `better-sqlite3`, `keytar`, `zod`, `zod-to-json-schema`, `@remotion/player`, `@remotion/renderer`, `@remotion/bundler`, `@vladmandic/face-api`, `ffmpeg-static`, `ffprobe-static`, `monaco-editor`, `@monaco-editor/react`, `uuid`, `nanoid`, `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`
+- [X] T004 Add dev dependencies: `typescript`, `@types/node`, `@types/react`, `@types/react-dom`, `vite`, `@vitejs/plugin-react`, `electron-builder`, `electron-vite`, `vitest`, `@playwright/test`, `playwright-electron`, `eslint`, `@typescript-eslint/eslint-plugin`, `@typescript-eslint/parser`, `eslint-plugin-react`, `eslint-plugin-react-hooks`, `prettier`
+- [X] T005 [P] Create `S:/video-avatar/tsconfig.json` (strict, noUncheckedIndexedAccess, target ES2022, paths for `@main/*`, `@renderer/*`, `@shared/*`)
+- [X] T006 [P] Create `S:/video-avatar/electron.vite.config.ts` with separate main, preload, and renderer configs pointing at their trees
+- [X] T007 [P] Create `S:/video-avatar/.eslintrc.cjs` with TypeScript, React, and Prettier plugins
+- [X] T008 [P] Add a custom ESLint rule in `S:/video-avatar/.eslint-rules/no-inline-fetch.cjs` that forbids `fetch(` outside `src/main/providers/**`
+- [X] T009 [P] Add an ESLint rule in `S:/video-avatar/.eslint-rules/no-string-concat-paths.cjs` that flags string literals joined to path-like variables, reinforcing Non-negotiable #6
+- [X] T010 [P] Create `S:/video-avatar/.prettierrc` (single-quotes, trailing comma all, print width 100)
+- [X] T011 [P] Add `S:/video-avatar/build/electron-builder.yml` (productName `Lumo`, win target `nsis`, `extraResources` includes `resources/templates` and `ffmpeg-static` binary, `publish: null` to disable auto-update)
+- [X] T012 [P] Add `S:/video-avatar/vitest.config.ts` with environment `node` for contract/integration and `jsdom` for renderer unit tests
+- [X] T013 [P] Add `S:/video-avatar/playwright.config.ts` for Playwright-Electron with a single Windows project
+- [X] T014 [P] Add `S:/video-avatar/.github/workflows/ci.yml` running on windows-latest: install, lint, typecheck, vitest, and a best-effort Playwright run (skip if binary build fails)
+- [X] T015 [P] Create a minimal `S:/video-avatar/README.md` pointing to `specs/001-lumo-v1/quickstart.md` for operator setup and `CLAUDE.md` for contributor context
 
 **Checkpoint**: Repo installs cleanly with `npm install` and `npm run lint` passes on an empty source tree.
 

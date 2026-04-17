@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          # Skip Electron download in the baseline install step; we only need
+          # typecheck + lint + vitest here. The package step below pulls Electron.
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit + contract + integration tests
+        run: npm run test
+
+      # No-eval / dynamic-require gate (constitutional Non-negotiable #4). This
+      # runs as a grep instead of relying on ESLint alone so it catches anything
+      # that slips past lint rule disables.
+      - name: Forbid eval / dynamic code
+        shell: bash
+        run: |
+          if grep -R --include="*.ts" --include="*.tsx" -nE "(^|[^a-zA-Z_])(eval\s*\(|new\s+Function\s*\(|require\s*\(\s*[\`\"'][^\`\"']*\$\{)" src/; then
+            echo "::error::Forbidden dynamic-code construct found under src/"
+            exit 1
+          fi
+
+      - name: Forbid committed .js in src/
+        shell: bash
+        run: |
+          if git ls-files 'src/**/*.js' | head -n 1 | grep -q .; then
+            echo "::error::A .js file is committed under src/; use .ts/.tsx only."
+            git ls-files 'src/**/*.js'
+            exit 1
+          fi
+
+      # Playwright-Electron is best-effort in CI. A failure here does not fail
+      # the build in v1 — we still guard it with a warning so regressions are
+      # visible in the run summary.
+      - name: Build Electron app (for UI tests)
+        id: build-electron
+        continue-on-error: true
+        run: npm run build
+
+      - name: Install Playwright browsers
+        if: steps.build-electron.outcome == 'success'
+        run: npx playwright install chromium
+
+      - name: UI smoke tests
+        if: steps.build-electron.outcome == 'success'
+        continue-on-error: true
+        run: npm run test:ui

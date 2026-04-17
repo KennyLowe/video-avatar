@@ -1,0 +1,9 @@
+dist
+out
+build
+node_modules
+coverage
+resources/face-api
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
