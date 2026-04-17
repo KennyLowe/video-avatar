@@ -18,7 +18,7 @@ import { runMigrations } from '@main/data/migrations/runner.js';
 let Database: typeof DatabaseType | null = null;
 let electronBindingLoadable = false;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   Database = require('better-sqlite3') as typeof DatabaseType;
   // Construction is where the native binding actually fires. The Electron
   // ABI-build doesn't load under plain Node even though the JS shim imports
