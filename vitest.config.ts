@@ -4,6 +4,11 @@ import { resolve } from 'node:path';
 export default defineConfig({
   test: {
     globals: false,
+    // Empty test runs are not failures during scaffolding phases. Contract +
+    // integration tests arrive in Phase 3 onward; this keeps CI green until
+    // then without masking real failures (vitest still fails on any failing
+    // test that does exist).
+    passWithNoTests: true,
     include: ['tests/contract/**/*.test.ts', 'tests/integration/**/*.test.ts'],
     exclude: ['tests/ui/**', 'node_modules', 'dist', 'out'],
     environment: 'node',
