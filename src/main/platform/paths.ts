@@ -1,23 +1,30 @@
-import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 // Every path in Lumo is absolute and built through path.resolve / path.join.
 // String concatenation is a lint error (Non-negotiable #6). This module is
 // the only place that knows where %APPDATA%/Lumo lives.
+//
+// `%APPDATA%` is a Windows env var (our sole target platform per the
+// constitution). We intentionally don't go through `electron.app.getPath`
+// here — keeping this module electron-free makes it importable from tests
+// and build scripts without needing the Electron binary on disk.
 
 let cachedAppDataRoot: string | null = null;
 
 export function getAppDataRoot(): string {
   if (cachedAppDataRoot !== null) return cachedAppDataRoot;
-  // Electron's userData path defaults to %APPDATA%/<productName> on Windows.
-  // We override to `%APPDATA%/Lumo` explicitly so tests and dev both land in
-  // the same place regardless of the packaged product name.
-  const appData = app.getPath('appData');
+  const appData = process.env['APPDATA'] ?? path.resolve(os.homedir(), 'AppData', 'Roaming');
   const root = path.resolve(appData, 'Lumo');
   mkdirSync(root, { recursive: true });
   cachedAppDataRoot = root;
   return root;
+}
+
+/** Testing hook — forces a fresh resolve on the next call. */
+export function resetPathsCacheForTests(): void {
+  cachedAppDataRoot = null;
 }
 
 export function getLogsDir(): string {

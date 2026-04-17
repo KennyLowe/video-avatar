@@ -23,10 +23,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        env:
-          # Skip Electron download in the baseline install step; we only need
-          # typecheck + lint + vitest here. The package step below pulls Electron.
-          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
       - name: Lint
         run: npm run lint
