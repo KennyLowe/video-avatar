@@ -1,16 +1,14 @@
 <!--
 Sync Impact Report
 ==================
-Version change: (initial ratification) → 1.0.0
-Rationale: First formal version pin. Principles and invariants were already
-  in force; this amendment adds the missing Governance section and version
-  footer so the document conforms to the Spec Kit template contract without
-  altering any principle.
+Version change: 1.0.0 → 1.1.0
+Rationale: MINOR — new Governance sub-item added ("Continuous integration
+  gate"). No existing principle, non-negotiable, or invariant altered.
 
-Modified principles: none (all 10 preserved verbatim; names unchanged)
+Modified principles: none
 Added sections:
-  - Governance (amendment procedure, versioning policy, compliance review)
-  - Version / Ratification / Last-Amended footer
+  - Governance → "Continuous integration gate" (new sub-item, after
+    Compliance review)
 Removed sections: none
 
 Templates audited:
@@ -22,8 +20,14 @@ Templates audited:
   - .specify/templates/agent-file-template.md ✅ no change needed
 
 Follow-up TODOs:
-  - Working name "Lumo" still flagged by the disclaimer on line 3. Decide
+  - Working name "Lumo" still flagged by the disclaimer below. Decide
     before first commit whether to rename; a rename is a PATCH bump.
+
+Prior amendments
+================
+v1.0.0 (2026-04-17): First formal version pin. Principles and invariants were
+  already in force; this amendment added the missing Governance section and
+  version footer so the document conforms to the Spec Kit template contract.
 -->
 
 # Constitution — Lumo
@@ -141,8 +145,22 @@ constitutional impact" or list the principles/invariants touched. The
 features; it MUST fail closed if a plan contradicts a principle without a
 recorded deviation.
 
+**Continuous integration gate.** After every push to any branch on the
+GitHub remote, the triggered GitHub Actions run MUST be watched to
+completion before any further work is planned or executed on that branch.
+A run whose `conclusion` is anything other than `success` counts as a
+failure and blocks forward progress until remediated. A step allowed to
+pass via `continue-on-error: true` MUST either (a) resolve to `success`
+on the next push once the underlying cause lands, or (b) be removed with
+a one-line justification in the same commit that removes it. Silent
+`continue-on-error` that never resolves is a defect. Ignoring a red CI
+to keep moving — "it's just the tests", "the build step doesn't matter
+yet" — is a defect. The operator is the reviewer here; the CI is the
+only independent second opinion we have, and discarding it defeats the
+purpose of having it.
+
 **Precedence.** When this file conflicts with a README, a code comment, or a
 template, this file wins until the conflicting artifact is updated in a
 follow-up commit.
 
-**Version**: 1.0.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-17
+**Version**: 1.1.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-17

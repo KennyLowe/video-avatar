@@ -50,6 +50,7 @@ and Remotion (composition).
 - **Every paid operation** shows a cost preview (units + USD + month-to-date) before running.
 - **Errors are verbatim.** Surface the provider's `.message` plus one concrete next step. Swallowed exceptions are defects.
 - **Remotion templates are typed contracts, not generated code.** Claude produces JSON only; `schema.parse` gates every render.
+- **Watch CI after every push.** Per constitution §Governance → "Continuous integration gate": after every `git push`, the GitHub Actions run MUST be watched to completion. A `conclusion` other than `success` blocks forward work until remediated. Use `gh run watch <id> --exit-status`. A step allowed to pass via `continue-on-error: true` must either land green on the next push or be removed with a justification. Do not proceed to the next task while CI is red.
 
 ## Active feature's five user stories (by priority)
 
