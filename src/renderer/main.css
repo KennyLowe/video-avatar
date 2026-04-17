@@ -1,0 +1,124 @@
+/* Phase 2 styling is deliberately minimal. A design system arrives later
+   once the screens are real. Keep this file free of media queries and
+   component-specific selectors so future additions can live with their
+   components. */
+
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  background: #0b0d10;
+  color: #e9ecef;
+}
+
+main {
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+button {
+  background: #1b73e8;
+  color: white;
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  margin-left: 6px;
+}
+
+code {
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.lumo-banner--block {
+  background: #5c1a1a;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.lumo-home__header {
+  margin-bottom: 24px;
+}
+
+.lumo-home__actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.lumo-home__empty {
+  color: #8a9199;
+}
+
+.lumo-home__list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.lumo-home__list button {
+  width: 100%;
+  text-align: left;
+  background: #15191e;
+  color: inherit;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lumo-home__list button:hover {
+  border-color: #1b73e8;
+}
+
+.lumo-home__slug {
+  color: #8a9199;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+}
+
+.lumo-async {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: #8a9199;
+  padding: 6px 0;
+}
+
+.lumo-async__bar {
+  width: 180px;
+  height: 8px;
+}
