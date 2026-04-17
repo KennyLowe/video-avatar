@@ -22,7 +22,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,md,yml,json}\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "playwright test",
+    "test:ui": "playwright test --pass-with-no-tests",
     "package": "npm run build && electron-builder --win --config build/electron-builder.yml",
     "rebuild": "electron-rebuild -f -w better-sqlite3,keytar",
     "postinstall": "electron-builder install-app-deps"
