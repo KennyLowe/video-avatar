@@ -2,12 +2,15 @@
 
 Active feature: `specs/001-lumo-v1/`.
 Authoritative documents:
-- [Constitution](./.specify/memory/constitution.md)
-- [Spec](./specs/001-lumo-v1/spec.md)
-- [Plan](./specs/001-lumo-v1/plan.md)
-- [Research](./specs/001-lumo-v1/research.md)
-- [Data model](./specs/001-lumo-v1/data-model.md)
-- [Contracts](./specs/001-lumo-v1/contracts/)
+- [Constitution](./.specify/memory/constitution.md) — principles, non-negotiables, invariants.
+- [Spec](./specs/001-lumo-v1/spec.md) — **WHAT only**. No libraries, endpoints, or file formats.
+- [Plan](./specs/001-lumo-v1/plan.md) — **HOW**. Start with §Technical Requirements for the FR → implementation mapping.
+- [Research](./specs/001-lumo-v1/research.md) — decisions behind the HOW, with sources.
+- [Data model](./specs/001-lumo-v1/data-model.md) — field-level schemas, on-disk layout, state machines.
+- [Contracts](./specs/001-lumo-v1/contracts/) — provider wrappers, IPC bridge, template contract.
+- [Tasks](./specs/001-lumo-v1/tasks.md) — ordered work list by user story.
+
+**Rule of thumb for edits**: if a change names a library, endpoint, model, file path, format, threshold, or flag, it belongs in `plan.md` / `data-model.md` / `contracts/` — **not** in `spec.md`. If a future change invalidates a library choice but not the behaviour, only `plan.md` should move.
 
 ## Product in one line
 

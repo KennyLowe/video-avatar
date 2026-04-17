@@ -7,10 +7,10 @@
 ## Content Quality
 
 - [x] No implementation details (languages, frameworks, APIs)
-  - Note: The spec names Electron, React, TypeScript, Vite, `better-sqlite3`, `keytar`, `ffmpeg`, Claude Code CLI, ElevenLabs, HeyGen, and Remotion. These are **product requirements locked by the project constitution**, not implementation choices for this feature. The Assumptions section calls this out explicitly. All other technical detail (endpoints, code snippets, SQL DDL) has been lifted out and will be decided at plan time.
+  - `spec.md` names only product-level dependencies (Claude Code, ElevenLabs, HeyGen, Remotion) once in its Assumptions section, and calls out that the tech stack is constitutional — not part of this specification. No library names, endpoint URLs, credential-store targets, file formats, field names, model identifiers, ffmpeg flags, or code-level constructs appear in FRs, SCs, user stories, edge cases, or key entities. All such detail lives in `plan.md` §Technical Requirements (FR → implementation mapping), `data-model.md`, `contracts/`, and `research.md`.
 - [x] Focused on user value and business needs
 - [x] Written for non-technical stakeholders
-  - Note: Given the operator IS the developer, "non-technical stakeholder" is interpreted as "any reader who hasn't read the source architecture notes." User stories and success criteria read without reference to code.
+  - The operator happens to also be the developer, but the spec reads without any reference to the codebase. User stories and success criteria describe behaviour the operator can observe.
 - [x] All mandatory sections completed
 
 ## Requirement Completeness
@@ -19,7 +19,7 @@
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
-  - Note: SC-001 mentions ElevenLabs, HeyGen, and Claude Code because those are the external services the product depends on by contract — not implementation internals. The measurability (single working day, no terminal, no manual file moves) is fully testable.
+  - SC-001 references "the AI assistant," "the voice-cloning service," and "the avatar service" by role rather than by product name. Success criteria for structural contracts (SC-002 for async feedback; SC-006 for credential handling) are stated as observable outcomes; the enforcement mechanism is in `plan.md` §Technical Requirements.
 - [x] All acceptance scenarios are defined
 - [x] Edge cases are identified
 - [x] Scope is clearly bounded
@@ -32,11 +32,12 @@
 - [x] User scenarios cover primary flows
 - [x] Feature meets measurable outcomes defined in Success Criteria
 - [x] No implementation details leak into specification
-  - Note: Same caveat as Content Quality, item 1. Provider names are product contract; code-level detail is not in the spec.
+  - Verified by a manual audit after the WHAT/HOW refactor on 2026-04-17. FR IDs and SC IDs are unchanged; `tasks.md` references still resolve. Any future change that pins a library, endpoint, threshold, or file format MUST go into `plan.md`, `data-model.md`, or `contracts/`.
 
 ## Notes
 
 - Items marked incomplete require spec updates before `/speckit.clarify` or `/speckit.plan`.
 - Source document preserved at repo root `spec.md` for reference; the authoritative feature spec is this folder's `spec.md`.
 - The six "Open questions to resolve at plan time" from the source document (HeyGen endpoint mapping, Remotion embed approach, audio upload transport default, face-detection library, Claude Code subprocess management, ffmpeg packaging) are correctly scoped to the plan phase and are not [NEEDS CLARIFICATION] items on this spec.
-- **Post-`/speckit.analyze` remediation (2026-04-17)**: FR-001 split into installed vs authenticated probes with concrete classification; FR-011 / FR-013 coverage confirmed in `tasks.md` T051 / T052 / T054; FR-027 thresholds pinned (1080p / 90% face / 15% motion / Laplacian 120); FR-034 renamed transport `direct` → `heygen` and enumerated full option list; FR-042 preset→CRF mapping pinned; SC-002 rewritten as a structural `AsyncFeedback` component contract. No requirements added or removed; changes are clarifications only.
+- **Post-`/speckit.analyze` remediation (2026-04-17)**: FR-001 split into installed vs authenticated probes; FR-011/FR-013 coverage confirmed in tasks; FR-027 thresholds pinned; FR-034 enumerated the full transport option list; FR-042 preset→CRF mapping pinned; SC-002 rewritten as a structural contract. No requirements added or removed.
+- **WHAT/HOW refactor (2026-04-17)**: Lifted every implementation detail out of `spec.md` into `plan.md` §Technical Requirements (new FR-by-FR mapping table). FR IDs and SC IDs unchanged; `tasks.md` references still resolve. The spec now reads as a product-level document and stays valid if any single library, endpoint, model, file format, or threshold is swapped — as long as the behaviour is still met.

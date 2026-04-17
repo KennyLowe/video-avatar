@@ -79,6 +79,99 @@ Evaluating this plan against every principle, non-negotiable, technical invarian
 
 **Gate result**: ✅ All constitutional items pass. No complexity exceptions needed. Proceeding to Phase 0.
 
+## Technical Requirements — FR→Implementation mapping
+
+`spec.md` is deliberately WHAT-only. Every concrete implementation decision — library, CLI invocation, endpoint, file format, credential-store target, field name, numeric threshold — is pinned here. Anything in `spec.md` that names a technology is either a product-level dependency (named in Assumptions) or is an error to be reported.
+
+Each row below cites the spec requirement by ID, restates the WHAT, and pins the adopted HOW.
+
+### Setup and credentials
+
+| FR | WHAT (from spec) | HOW (adopted here) |
+|----|------------------|--------------------|
+| FR-001 | Verify AI assistant installed + operator-authenticated at launch; block all other features on failure. | `claudeCode.verifyInstalled()` probes `claude --version` for installed; runs a trivial `claude --print --output-format json` with a 5 s timeout for authenticated. Stdout is valid JSON → authenticated. Stderr matches `/not logged in|unauthorized|401/i` → not authenticated. Other non-zero exit → authenticated with warning. Home banner links to `winget install Anthropic.Claude` or `claude /login`. |
+| FR-003 | Paid-service credentials in the OS secret store; never in files on disk. | `keytar` → Windows Credential Manager. Targets: `Lumo/elevenlabs`, `Lumo/heygen`, `Lumo/s3` (optional). Accounts are always `default`. No cache in a module-level variable — each provider call fetches fresh. |
+| FR-004 | Test action performs a lightweight authenticated round-trip. | ElevenLabs: `GET /v1/user`. HeyGen: `GET /v2/user/remaining_quota` (or equivalent current endpoint verified at implementation time). |
+
+### Project management
+
+| FR | WHAT (from spec) | HOW |
+|----|------------------|-----|
+| FR-007 | Project is a folder with a known, stable layout. | `<project>/project.json` (metadata), `<project>/state.db` (per-project SQLite via `better-sqlite3` in WAL mode), and subfolders `audio/takes`, `audio/tts`, `video/source`, `video/segments`, `video/avatar`, `scripts`, `renders`, `templates`, `logs`. Slug disambiguation via numeric suffix on collision. |
+| FR-009 | Delete to OS recycle/trash, not hard delete. | `shell.trashItem` (Electron). |
+
+### Script studio
+
+| FR | WHAT | HOW |
+|----|------|-----|
+| FR-010 | AI assistant generates structured script; response validated against a published schema. | Claude Code CLI: `claude --print --output-format json --model claude-opus-4-7`. Zod schema `ScriptResponseSchema = z.object({ title, body, estimatedDurationSeconds, chapters? })` in `src/shared/schemas/script.ts`. |
+| FR-013 | Selection-driven assist actions invoke the AI assistant once with diff preview. | One system prompt per action in `src/main/services/assistPrompts.ts`. Monaco editor selection → `scripts.assist` IPC → Claude Code → diff preview component → explicit Apply gate. |
+
+### Voice lab
+
+| FR | WHAT | HOW |
+|----|------|-----|
+| FR-015 | Broadcast-grade mono recording. | 48 kHz mono 24-bit WAV via `MediaRecorder` + Web Audio API. Files at `audio/takes/<timestamp>.wav`. |
+| FR-016 | Import common audio formats and normalise. | Drag-and-drop WAV/MP3/FLAC/M4A/OGG. Normalisation via bundled `ffmpeg-static` sidecar to the recording format. |
+| FR-018 | Query voice service's PVC minimum at submit time. | ElevenLabs library helper `getPvcMinimumSeconds()` / `getIvcMinimumSeconds()` with cached fallbacks of 1800 s / 60 s (per `research.md` §2). |
+| FR-021 | Persist voice-training jobs. | `jobs` row with `kind='voice_train'`, `provider='elevenlabs'`, polled until ready; toast via Electron `Notification` on completion. |
+
+### Avatar lab
+
+| FR | WHAT | HOW |
+|----|------|-----|
+| FR-023 | Tier selector drives importer, checks, and endpoint. | `src/renderer/screens/Avatar.tsx` branches on `tier: 'photo' \| 'instant'`. Endpoints: `POST /v2/photo_avatar/train` vs the Digital Twin video-avatar flow (exact path verified against `developers.heygen.com` at implementation time; captured in `research.md` §1). |
+| FR-026 | Grab frame from video. | `ffmpeg -ss <t> -i <src> -frames:v 1 -y <out.png>`. |
+| FR-027 | Quality heuristics with concrete thresholds. | `src/renderer/services/qualityHeuristics.ts` applies: video short-edge < 1080 px → warn; image short-edge < 1024 px → warn; face coverage < 90 % of sampled frames → warn; multi-face on any sampled frame → warn (video) / reject (image); inter-frame pixel delta > 15 % → warn; Laplacian variance < 120 → warn. Face detection via `@vladmandic/face-api` (TF.js WebGL). |
+| FR-028 | Persist avatar-training jobs. | `jobs` row with `kind='avatar_train'`, `provider='heygen'`. |
+
+### Avatar video generation
+
+| FR | WHAT | HOW |
+|----|------|-----|
+| FR-033 | Pipeline: synthesise → transfer → generate → poll → download. | `src/main/workers/handlers/avatarVideo.ts` as one job (`kind='avatar_video'`). TTS to `<project>/audio/tts/<uuid>.mp3` via ElevenLabs `POST /v1/text-to-speech/{voice_id}`. Transfer via resolved `TransportKind`. Generate via HeyGen `/v2/video/generate` (Standard) or `/v2/video/av4/generate` (Avatar IV). Poll `/v1/video_status.get`. Download the resulting MP4 into `video/avatar/`. |
+| FR-034 | Configurable audio transport with default + fallbacks. | `TransportKind = 'heygen' \| 's3' \| 'r2' \| 'cloudflared'`. Default `'heygen'` uploads to `POST https://upload.heygen.com/v1/asset` (raw binary, `Content-Type: audio/mpeg`, `X-API-KEY` header) and references the returned id as `audio_asset_id`. `'s3'`/`'r2'` via `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` with 15 min TTL. `'cloudflared'` spawns `cloudflared tunnel run --url http://localhost:<port>`. Resolver order: configured default → remaining in `['heygen','s3','r2','cloudflared']` order. |
+
+### Composition studio
+
+| FR | WHAT | HOW |
+|----|------|-----|
+| FR-037 | Required template parts: schema, default values, duration, fps, composition root. | Every `.tsx` template MUST export `schema` (Zod), `defaultProps` (matching `schema`), `durationInFrames` (number or function), `fps` (number), `Composition` (React component). Missing export → `validity: 'invalid-missing-<exportName>'`. See `contracts/remotion-template.md`. |
+| FR-039 | Schema → machine-readable description → AI assistant → validate response. | `zod-to-json-schema` produces JSON Schema from the Zod schema; sent to Claude Code as part of the prompt; response parsed by `template.schema.parse`. |
+| FR-041 | Interactive preview + render into renders area. | `@remotion/player` in renderer (React component); `@remotion/renderer.renderMedia` in main. Output at `<project>/renders/<slug>-<iso-timestamp>.mp4` (Windows-safe filename — no colons). |
+| FR-042 | Three named quality presets mapping to encoder settings. | Preset → ffmpeg flags: `fast = {preset: 'veryfast', crf: 26}`, `balanced = {preset: 'medium', crf: 22}`, `quality = {preset: 'slow', crf: 18}`. Audio: AAC 192 kbit/s default. Cancellation removes partial `.mp4` and any temp directories. |
+
+### Jobs, notifications, persistence
+
+| FR | WHAT | HOW |
+|----|------|-----|
+| FR-044 | Persisted jobs with back-off polling. | `jobs` SQLite table (columns per `data-model.md`). Single worker in `src/main/workers/jobQueue.ts`. Back-off schedule: 5 s → 10 s → 20 s → 40 s → 80 s → 120 s cap. Abort via `AbortSignal` on `jobs.cancel`. |
+| FR-045 | Reconcile active jobs against services on launch. | `src/main/workers/reconciler.ts` runs before the queue accepts new work. |
+| FR-047 | OS native notification on job completion. | Electron `Notification` API; platform ships Windows toasts. |
+
+### Observability and errors
+
+| FR | WHAT | HOW |
+|----|------|-----|
+| FR-052 | Structured, daily-rotated logs with credentials redacted. | JSONL at `%APPDATA%/Lumo/logs/YYYY-MM-DD.jsonl`. Rotation on first write of each day. Redactor at `src/main/services/redactor.ts` scrubs known shapes: ElevenLabs `xi-api-key`, HeyGen `x-api-key`, bearer tokens, AWS pre-signed URL `X-Amz-Signature=` params, Cloudflare tunnel hostnames. |
+
+### Security and safety
+
+| FR | WHAT | HOW |
+|----|------|-----|
+| FR-054 | No AI-assistant output ever executed as code. | Lint rule `no-eval`; CI grep fails on `eval(\|new Function(\|require\(` of a computed path under `src/`. Every AI-generated payload is JSON parsed once and validated by a Zod schema before any use. |
+| FR-055 | Paths via runtime API, not string concat. | `path.resolve` / `path.join` (Node). Custom ESLint rule `.eslint-rules/no-string-concat-paths.cjs`. |
+| FR-056 | Auto-update off for v1. | `electron-builder.yml` sets `publish: null`; no `autoUpdater` import in `src/main/`. |
+
+### Success criteria — buildable contracts
+
+| SC | WHAT | HOW |
+|----|------|-----|
+| SC-002 | Every async > 5 s shows one of progress / ETA / typical-time hint. | A shared component type at `src/renderer/components/AsyncFeedback.tsx` with discriminated union `kind: 'progress' \| 'eta' \| 'typical'`. Every screen that `await`s an operation expected to exceed 5 s MUST render an `<AsyncFeedback>` bound to the operation. CI grep fails the build if a renderer file awaits a known long-running IPC channel without `<AsyncFeedback>` in its JSX. |
+| SC-006 | No credential ever outside the OS secret store. | Redactor fuzz test at `tests/integration/redactor-fuzz.test.ts` feeds 10 000 random strings shaped like known credentials and asserts zero escape. CI grep scans all JSONL log fixtures for the redactor's bypass patterns. |
+
+Anything not listed above has no HOW worth pinning beyond what lives in `data-model.md` or `contracts/`.
+
 ## Project Structure
 
 ### Documentation (this feature)
