@@ -7,3 +7,12 @@ resources/face-api
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+
+# Human-authored documentation — preserve hand-crafted line breaks and tables.
+spec.md
+CLAUDE.md
+specs/**
+
+# Spec Kit tooling vendored verbatim; don't drift from upstream.
+.specify/**
+.claude/**

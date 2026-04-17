@@ -8,6 +8,7 @@ module.exports = {
       './tsconfig.main.json',
       './tsconfig.preload.json',
       './tsconfig.renderer.json',
+      './tsconfig.node.json',
     ],
     tsconfigRootDir: __dirname,
   },
