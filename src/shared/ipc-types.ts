@@ -3,6 +3,9 @@ import type { AppSettings } from './schemas/settings.js';
 import type { ClaudeVerifyResult } from './schemas/claudeCode.js';
 import type { Script, ScriptResponse } from './schemas/script.js';
 import type { GenerationMode } from './schemas/render.js';
+import type { Voice, VoiceTier } from './schemas/voice.js';
+import type { Take } from './schemas/take.js';
+import type { Job } from './schemas/job.js';
 import type { ProviderErrorShape } from './errors.js';
 
 // Shape of the bridge exposed at window.lumo. Types live in shared/ so both
@@ -102,6 +105,39 @@ export interface LumoBridge {
   };
   voices: {
     listStock: () => Promise<IpcEnvelope<StockVoice[]>>;
+    list: (input: { slug: string }) => Promise<IpcEnvelope<Voice[]>>;
+    listTakes: (input: {
+      slug: string;
+    }) => Promise<IpcEnvelope<{ takes: Take[]; goodSeconds: number }>>;
+    saveRecording: (input: {
+      slug: string;
+      bytesBase64: string;
+      sourceExtension: string;
+    }) => Promise<IpcEnvelope<Take>>;
+    importFile: (input: { slug: string; sourcePath: string }) => Promise<IpcEnvelope<Take>>;
+    markTake: (input: {
+      slug: string;
+      takeId: number;
+      mark: 'good' | 'bad' | 'unmarked';
+    }) => Promise<IpcEnvelope<Take>>;
+    trimTake: (input: {
+      slug: string;
+      takeId: number;
+      inMs: number;
+      outMs: number;
+    }) => Promise<IpcEnvelope<Take>>;
+    deleteTake: (input: { slug: string; takeId: number }) => Promise<IpcEnvelope<void>>;
+    minimums: () => Promise<IpcEnvelope<{ pvcSeconds: number; ivcSeconds: number }>>;
+    train: (input: {
+      slug: string;
+      name: string;
+      tier: VoiceTier;
+    }) => Promise<IpcEnvelope<{ voice: Voice; job: Job }>>;
+    preview: (input: {
+      slug: string;
+      voiceId: string;
+      text: string;
+    }) => Promise<IpcEnvelope<{ mp3Path: string }>>;
   };
   avatars: {
     listStock: () => Promise<IpcEnvelope<StockAvatar[]>>;

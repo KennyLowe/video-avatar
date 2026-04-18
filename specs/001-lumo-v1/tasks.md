@@ -144,22 +144,22 @@ Electron single-repo layout per `plan.md`:
 
 ### Implementation for User Story 2
 
-- [ ] T070 [US2] Implement the audio recorder in the renderer at `S:/video-avatar/src/renderer/services/audioRecorder.ts` using `MediaRecorder` with PCM 48 kHz mono 24-bit, pause/resume, live RMS + peak via Web Audio API
-- [ ] T071 [US2] [P] Build the WaveformMeter component at `S:/video-avatar/src/renderer/components/WaveformMeter.tsx` drawing live peak bars and a scrolling waveform
-- [ ] T072 [US2] Implement `voices.recordStart`, `voices.recordStop`, and `voices.import` IPC handlers in `S:/video-avatar/src/main/ipc/voices.ts` normalising imports with ffmpeg to 48 kHz mono 24-bit WAV at `audio/takes/<ts>.wav`
-- [ ] T073 [US2] Implement take management IPC handlers (`markTake`, `trimTake`, `deleteTake`) plus a `takes` repository at `S:/video-avatar/src/main/data/repositories/takes.ts`
-- [ ] T074 [US2] Extend `elevenlabs.ts` with `createPVC`, `createIVC`, `getVoiceStatus`, and concatenation via ffmpeg before upload
-- [ ] T075 [US2] Implement the `voiceTrain` job handler at `S:/video-avatar/src/main/workers/handlers/voiceTrain.ts` with PVC + IVC branches, `kind='voice_train'`, poll until ready, write `voices` row on completion
-- [ ] T076 [US2] [P] Build the Voice screen at `S:/video-avatar/src/renderer/screens/Voice.tsx` with Record/Import tabs, input-device dropdown, per-take controls (play, scrub, trim, mark, rename, delete), and a running total of good seconds/minutes
-- [ ] T077 [US2] Add Train PVC and Train IVC actions to the Voice screen that refuse to submit below the cached minimums (FR-018, FR-020) and surface the numeric gap; IVC button labelled "Quick test (not recommended for production)" per FR-019
-- [ ] T078 [US2] Implement `voices.preview(voiceId, text)` IPC handler that generates a 10-second TTS clip and plays it inline; A/B toggle between two voices
-- [ ] T079 [US2] Wire the trained voice into the Generate screen's voice picker so US2 enriches US1's pipeline without regressions
+- [X] T070 [US2] Implement the audio recorder in the renderer at `S:/video-avatar/src/renderer/services/audioRecorder.ts` using `MediaRecorder` with PCM 48 kHz mono 24-bit, pause/resume, live RMS + peak via Web Audio API
+- [X] T071 [US2] [P] Build the WaveformMeter component at `S:/video-avatar/src/renderer/components/WaveformMeter.tsx` drawing live peak bars and a scrolling waveform
+- [X] T072 [US2] Implement `voices.recordStart`, `voices.recordStop`, and `voices.import` IPC handlers in `S:/video-avatar/src/main/ipc/voices.ts` normalising imports with ffmpeg to 48 kHz mono 24-bit WAV at `audio/takes/<ts>.wav`
+- [X] T073 [US2] Implement take management IPC handlers (`markTake`, `trimTake`, `deleteTake`) plus a `takes` repository at `S:/video-avatar/src/main/data/repositories/takes.ts`
+- [X] T074 [US2] Extend `elevenlabs.ts` with `createPVC`, `createIVC`, `getVoiceStatus`, and concatenation via ffmpeg before upload
+- [X] T075 [US2] Implement the `voiceTrain` job handler at `S:/video-avatar/src/main/workers/handlers/voiceTrain.ts` with PVC + IVC branches, `kind='voice_train'`, poll until ready, write `voices` row on completion
+- [X] T076 [US2] [P] Build the Voice screen at `S:/video-avatar/src/renderer/screens/Voice.tsx` with Record/Import tabs, input-device dropdown, per-take controls (play, scrub, trim, mark, rename, delete), and a running total of good seconds/minutes
+- [X] T077 [US2] Add Train PVC and Train IVC actions to the Voice screen that refuse to submit below the cached minimums (FR-018, FR-020) and surface the numeric gap; IVC button labelled "Quick test (not recommended for production)" per FR-019
+- [X] T078 [US2] Implement `voices.preview(voiceId, text)` IPC handler that generates a 10-second TTS clip and plays it inline; A/B toggle between two voices
+- [X] T079 [US2] Wire the trained voice into the Generate screen's voice picker so US2 enriches US1's pipeline without regressions
 
 ### Tests for User Story 2
 
-- [ ] T080 [P] [US2] Contract test for PVC/IVC endpoints at `S:/video-avatar/tests/contract/providers/elevenlabs-training.test.ts`
+- [X] T080 [P] [US2] Contract test for PVC/IVC endpoints at `S:/video-avatar/tests/contract/providers/elevenlabs-training.test.ts`
 - [ ] T081 [P] [US2] Integration test for the voiceTrain job handler at `S:/video-avatar/tests/integration/voiceTrain.test.ts` including concat-then-upload and status polling to completion
-- [ ] T082 [US2] Playwright-Electron spec at `S:/video-avatar/tests/ui/p2-pvc-training.spec.ts` covering record → mark good → submit → close → reopen → ready → preview → use in Generate
+- [X] T082 [US2] Playwright-Electron spec at `S:/video-avatar/tests/ui/p2-pvc-training.spec.ts` covering record → mark good → submit → close → reopen → ready → preview → use in Generate
 
 **Checkpoint**: A custom PVC voice can be trained, survives an app restart mid-training, previews correctly, and drives a Generate-screen avatar video.
 

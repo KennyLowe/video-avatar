@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import * as path from 'node:path';
 import * as keychain from '@main/platform/keychain.js';
 import { ProviderError } from '@shared/errors.js';
 import { request } from './http.js';
@@ -116,6 +118,101 @@ export async function getIvcMinimumSeconds(): Promise<number> {
   if (cachedIvcSeconds !== null) return cachedIvcSeconds;
   cachedIvcSeconds = DEFAULT_IVC_SECONDS;
   return cachedIvcSeconds;
+}
+
+// --- voice cloning --------------------------------------------------------
+
+export interface VoiceCloneSubmission {
+  name: string;
+  description?: string;
+  files: readonly string[];
+}
+
+/** Instant Voice Cloning. `/v1/voices/add` — multipart; returns ready voice. */
+export async function createIVC(sub: VoiceCloneSubmission): Promise<{ voiceId: string }> {
+  const form = buildVoiceForm(sub);
+  const { body } = await request<{ voice_id?: string }>({
+    provider: 'elevenlabs',
+    method: 'POST',
+    url: `${BASE_URL}/v1/voices/add`,
+    headers: await authedHeaders(),
+    body: form,
+    timeoutMs: 300_000,
+  });
+  if (typeof body?.voice_id !== 'string' || body.voice_id.length === 0) {
+    throw new ProviderError({
+      provider: 'elevenlabs',
+      code: 'invalid_ivc_response',
+      message: 'ElevenLabs IVC succeeded but did not return a voice_id.',
+    });
+  }
+  return { voiceId: body.voice_id };
+}
+
+/**
+ * Professional Voice Cloning. Submission returns a voice_id immediately;
+ * training runs server-side for 1–4 hours. Poll `getVoiceStatus(voiceId)`
+ * until `'ready'` or `'failed'`. PVC endpoints change more often than IVC;
+ * verify against current docs at implementation time.
+ */
+export async function createPVC(sub: VoiceCloneSubmission): Promise<{ voiceId: string }> {
+  const form = buildVoiceForm(sub);
+  const { body } = await request<{ voice_id?: string }>({
+    provider: 'elevenlabs',
+    method: 'POST',
+    url: `${BASE_URL}/v1/voices/pvc/create`,
+    headers: await authedHeaders(),
+    body: form,
+    timeoutMs: 300_000,
+  });
+  if (typeof body?.voice_id !== 'string' || body.voice_id.length === 0) {
+    throw new ProviderError({
+      provider: 'elevenlabs',
+      code: 'invalid_pvc_response',
+      message: 'ElevenLabs PVC submission succeeded but did not return a voice_id.',
+    });
+  }
+  return { voiceId: body.voice_id };
+}
+
+export type VoiceReadyStatus = 'training' | 'ready' | 'failed';
+
+export async function getVoiceStatus(voiceId: string): Promise<VoiceReadyStatus> {
+  const { body } = await request<{ status?: string; fine_tuning?: { state?: string } }>({
+    provider: 'elevenlabs',
+    method: 'GET',
+    url: `${BASE_URL}/v1/voices/${encodeURIComponent(voiceId)}`,
+    headers: await authedHeaders(),
+  });
+  const state = (body?.fine_tuning?.state ?? body?.status ?? '').toString().toLowerCase();
+  if (state === 'ready' || state === 'fine_tuned' || state === 'finished') return 'ready';
+  if (state === 'failed' || state === 'error') return 'failed';
+  return 'training';
+}
+
+export async function cancelVoiceTraining(voiceId: string): Promise<void> {
+  await request({
+    provider: 'elevenlabs',
+    method: 'DELETE',
+    url: `${BASE_URL}/v1/voices/${encodeURIComponent(voiceId)}`,
+    headers: await authedHeaders(),
+    expect: 'empty',
+    timeoutMs: 30_000,
+  });
+}
+
+function buildVoiceForm(sub: VoiceCloneSubmission): FormData {
+  const form = new FormData();
+  form.append('name', sub.name);
+  if (sub.description) form.append('description', sub.description);
+  for (const filePath of sub.files) {
+    const bytes = readFileSync(filePath);
+    const ab = new ArrayBuffer(bytes.byteLength);
+    new Uint8Array(ab).set(bytes);
+    const filename = path.basename(filePath);
+    form.append('files', new Blob([ab], { type: 'audio/wav' }), filename);
+  }
+  return form;
 }
 
 export function __resetForTests(): void {

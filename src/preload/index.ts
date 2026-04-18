@@ -36,6 +36,16 @@ const bridge: LumoBridge = {
   },
   voices: {
     listStock: () => ipcRenderer.invoke('voices.listStock'),
+    list: (input) => ipcRenderer.invoke('voices.list', input),
+    listTakes: (input) => ipcRenderer.invoke('voices.listTakes', input),
+    saveRecording: (input) => ipcRenderer.invoke('voices.saveRecording', input),
+    importFile: (input) => ipcRenderer.invoke('voices.importFile', input),
+    markTake: (input) => ipcRenderer.invoke('voices.markTake', input),
+    trimTake: (input) => ipcRenderer.invoke('voices.trimTake', input),
+    deleteTake: (input) => ipcRenderer.invoke('voices.deleteTake', input),
+    minimums: () => ipcRenderer.invoke('voices.minimums'),
+    train: (input) => ipcRenderer.invoke('voices.train', input),
+    preview: (input) => ipcRenderer.invoke('voices.preview', input),
   },
   avatars: {
     listStock: () => ipcRenderer.invoke('avatars.listStock'),

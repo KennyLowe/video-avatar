@@ -121,7 +121,19 @@ function buildHeaders(
   body: HttpRequest['body'],
 ): Record<string, string> {
   const headers: Record<string, string> = { ...custom };
-  if (body !== undefined && !(body instanceof Buffer) && !(typeof body === 'string')) {
+  // Only auto-apply JSON content-type for plain-object bodies. FormData and
+  // URLSearchParams need fetch to set their own content-type (including the
+  // multipart boundary) — and Buffer / string / typed-array bodies are
+  // whatever the caller says they are.
+  if (
+    body !== undefined &&
+    !Buffer.isBuffer(body) &&
+    typeof body !== 'string' &&
+    !(body instanceof Uint8Array) &&
+    !(body instanceof ArrayBuffer) &&
+    !(body instanceof FormData) &&
+    !(body instanceof URLSearchParams)
+  ) {
     if (!headerSet(headers, 'content-type')) {
       headers['Content-Type'] = 'application/json';
     }

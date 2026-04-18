@@ -51,13 +51,23 @@ export function Generate({ projectSlug }: Props): JSX.Element {
       return;
     }
     setCredNeeded(null);
-    const [scriptList, voiceList, avatarList] = await Promise.all([
+    const [scriptList, stockVoiceList, trainedVoices, avatarList] = await Promise.all([
       unwrap(lumo.scripts.list({ slug: projectSlug })),
       unwrap(lumo.voices.listStock()).catch(() => [] as StockVoice[]),
+      unwrap(lumo.voices.list({ slug: projectSlug })).catch(() => []),
       unwrap(lumo.avatars.listStock()).catch(() => [] as StockAvatar[]),
     ]);
     setScripts(scriptList);
-    setVoices(voiceList);
+    // Trained voices (status='ready' with a providerVoiceId) first, then
+    // stock — operators always see their custom work at the top.
+    const trainedVoiceOptions: StockVoice[] = trainedVoices
+      .filter((v) => v.status === 'ready' && v.providerVoiceId !== null)
+      .map((v) => ({
+        voiceId: v.providerVoiceId as string,
+        name: `${v.name} (trained, ${v.tier.toUpperCase()})`,
+        preview: null,
+      }));
+    setVoices([...trainedVoiceOptions, ...stockVoiceList]);
     setAvatars(avatarList);
   }, [projectSlug]);
 
