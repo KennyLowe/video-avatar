@@ -26,20 +26,45 @@ extraResources:
     filter: ['**/*']
 win:
   target:
+    # nsis = traditional installer (requires write to Programs folder + UAC
+    # prompt when allowElevation is on). Kept for operators who want Start-
+    # menu integration.
     - target: nsis
       arch:
         - x64
-  artifactName: Lumo-Setup-${version}.${ext}
+    # portable = single self-contained exe. No install, no admin, no
+    # registry. Unpacks to a temp dir on first run. Right choice for
+    # machines where the operator lacks install rights.
+    - target: portable
+      arch:
+        - x64
+    # zip = folder-shaped distribution. Unzip anywhere, run Lumo.exe. Same
+    # portability story as `portable` but without the self-extraction step,
+    # so first launch is instant.
+    - target: zip
+      arch:
+        - x64
+  artifactName: Lumo-${version}-${ext}.${ext}
   # electron-builder will convert the PNG to ICO at package time. Swap in a
   # hand-authored brand mark before the first public release.
   icon: build/icons/icon.png
 nsis:
   oneClick: false
-  allowElevation: true
+  # Per-user install keeps the installer out of Program Files, so NSIS
+  # doesn't need admin either. The UAC prompt only appeared in v0 because
+  # allowElevation was true.
+  perMachine: false
+  allowElevation: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: Lumo
+  artifactName: Lumo-Setup-${version}.${ext}
+portable:
+  artifactName: Lumo-Portable-${version}.${ext}
+  # Unpack to a predictable per-user cache instead of the default random
+  # temp dir — makes second-launch instant and first-launch debuggable.
+  unpackDirName: LumoPortable
 # Auto-update is off for v1 per constitutional Non-negotiable. Releases ship as
 # manual operator-initiated installers; no publish provider is configured.
 publish: null
