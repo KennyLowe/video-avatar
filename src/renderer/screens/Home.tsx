@@ -3,6 +3,7 @@ import { lumo, unwrap } from '@renderer/lib/lumo.js';
 import { ClaudeBanner } from '@renderer/components/ClaudeBanner.js';
 import { AsyncFeedback } from '@renderer/components/AsyncFeedback.js';
 import { DeleteProjectDialog } from '@renderer/components/DeleteProjectDialog.js';
+import { usePrompt } from '@renderer/components/PromptProvider.js';
 import type { Project, ProjectSummary } from '@shared/schemas/project.js';
 
 // Home per FR-008. Project grid with last-modified + per-project actions
@@ -23,6 +24,7 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<ProjectSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const prompt = usePrompt();
 
   const refresh = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -65,7 +67,7 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
   }
 
   async function createProject(): Promise<void> {
-    const name = window.prompt('Name the new project');
+    const name = await prompt('Name the new project');
     if (name === null || name.trim().length === 0) return;
     setPendingAction('Creating project…');
     try {
@@ -81,7 +83,7 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
   }
 
   async function renameProject(summary: ProjectSummary): Promise<void> {
-    const next = window.prompt('New project name', summary.name);
+    const next = await prompt('New project name', summary.name);
     if (next === null || next.trim().length === 0 || next.trim() === summary.name) return;
     setPendingAction('Renaming…');
     setError(null);

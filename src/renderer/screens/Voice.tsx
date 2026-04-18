@@ -8,6 +8,7 @@ import {
 } from '@renderer/services/audioRecorder.js';
 import { WaveformMeter } from '@renderer/components/WaveformMeter.js';
 import { AsyncFeedback } from '@renderer/components/AsyncFeedback.js';
+import { usePrompt, useConfirm } from '@renderer/components/PromptProvider.js';
 import { useKeyboardShortcuts } from '@renderer/hooks/useKeyboardShortcuts.js';
 import type { Take } from '@shared/schemas/take.js';
 import type { Voice, VoiceTier } from '@shared/schemas/voice.js';
@@ -35,6 +36,8 @@ export function Voice({ projectSlug }: Props): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const recorderRef = useRef<AudioRecorder | null>(null);
   const listenersRef = useRef<Set<Listener>>(new Set());
+  const prompt = usePrompt();
+  const confirm = useConfirm();
 
   const subscribe = useCallback((fn: Listener) => {
     listenersRef.current.add(fn);
@@ -167,7 +170,7 @@ export function Voice({ projectSlug }: Props): JSX.Element {
   }
 
   async function deleteTake(takeId: number): Promise<void> {
-    if (!window.confirm('Delete this take? This cannot be undone.')) return;
+    if (!(await confirm('Delete this take? This cannot be undone.'))) return;
     try {
       await unwrap(lumo.voices.deleteTake({ slug: projectSlug, takeId }));
       await refresh();
@@ -177,7 +180,7 @@ export function Voice({ projectSlug }: Props): JSX.Element {
   }
 
   async function train(tier: VoiceTier): Promise<void> {
-    const name = window.prompt(`Name for this ${tier.toUpperCase()} voice`);
+    const name = await prompt(`Name for this ${tier.toUpperCase()} voice`);
     if (name === null || name.trim().length === 0) return;
     setBusy(`Submitting ${tier.toUpperCase()}…`);
     try {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { lumo, unwrap } from '@renderer/lib/lumo.js';
 import { AsyncFeedback } from '@renderer/components/AsyncFeedback.js';
 import { FaceDetectPanel } from '@renderer/components/FaceDetectPanel.js';
+import { usePrompt } from '@renderer/components/PromptProvider.js';
 import { useKeyboardShortcuts } from '@renderer/hooks/useKeyboardShortcuts.js';
 import {
   evaluateImage,
@@ -41,6 +42,7 @@ export function Avatar({ projectSlug }: Props): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [segmentInSeconds, setSegmentInSeconds] = useState(0);
   const [segmentOutSeconds, setSegmentOutSeconds] = useState(0);
+  const prompt = usePrompt();
 
   const refresh = useCallback(async (): Promise<void> => {
     const [avatarList, segmentList] = await Promise.all([
@@ -161,7 +163,7 @@ export function Avatar({ projectSlug }: Props): JSX.Element {
       setError('Cannot submit: quality checks reject this image.');
       return;
     }
-    const name = window.prompt('Name for this Photo Avatar');
+    const name = await prompt('Name for this Photo Avatar');
     if (name === null || name.trim().length === 0) return;
     setBusy('Submitting Photo Avatar…');
     setError(null);
@@ -188,7 +190,7 @@ export function Avatar({ projectSlug }: Props): JSX.Element {
       setError('Add at least one segment before training.');
       return;
     }
-    const name = window.prompt('Name for this Instant Avatar');
+    const name = await prompt('Name for this Instant Avatar');
     if (name === null || name.trim().length === 0) return;
     setBusy('Submitting Instant Avatar…');
     setError(null);

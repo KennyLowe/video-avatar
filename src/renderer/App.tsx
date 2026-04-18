@@ -10,6 +10,7 @@ import { Settings } from './screens/Settings.js';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts.js';
 import { useJobs } from './hooks/useJobs.js';
 import { JobsTray } from './components/JobsTray.js';
+import { PromptProvider } from './components/PromptProvider.js';
 
 // Routes every screen. Jobs reached via Ctrl+J, Settings via Ctrl+,.
 // JobsTray is rendered globally so operators always see pipeline status
@@ -85,17 +86,19 @@ export function App(): JSX.Element {
   }
 
   return (
-    <div className="lumo-app">
-      {projectSlug !== null ? <TopNav current={screen} onNavigate={setScreen} /> : null}
-      {renderScreen()}
-      {projectSlug !== null ? (
-        <JobsTray
-          active={jobsState.active}
-          onCancel={jobsState.cancel}
-          onOpenPanel={() => setScreen('jobs')}
-        />
-      ) : null}
-    </div>
+    <PromptProvider>
+      <div className="lumo-app">
+        {projectSlug !== null ? <TopNav current={screen} onNavigate={setScreen} /> : null}
+        {renderScreen()}
+        {projectSlug !== null ? (
+          <JobsTray
+            active={jobsState.active}
+            onCancel={jobsState.cancel}
+            onOpenPanel={() => setScreen('jobs')}
+          />
+        ) : null}
+      </div>
+    </PromptProvider>
   );
 }
 
