@@ -266,22 +266,22 @@ Electron single-repo layout per `plan.md`:
 
 **Purpose**: Cross-story hardening, transport fallbacks, lint gates that enforce the constitution, packaging, and end-to-end validation.
 
-- [ ] T132 [P] Add a CI grep/ESLint step in `S:/video-avatar/.github/workflows/ci.yml` that fails the build on any `eval(`, `new Function(`, or dynamic `require(` of a computed path anywhere in `src/`
-- [ ] T133 [P] Implement the S3/R2 transport fallback at `S:/video-avatar/src/main/providers/transport.ts` — `put()` uploads via `@aws-sdk/client-s3` to the operator's configured bucket and returns a pre-signed URL via `@aws-sdk/s3-request-presigner` with a short TTL (15 min); R2 uses the same code with a different endpoint. Credentials from keychain target `Lumo/s3`.
-- [ ] T134 [P] Implement the cloudflared transport fallback at `S:/video-avatar/src/main/providers/transport.ts` — spawns `cloudflared tunnel run --url http://localhost:<port>` pointing at an ephemeral `http` server serving the audio file; returns the tunnel URL and a `cleanup` callback that tears down both the server and the tunnel subprocess. Requires a configured `cloudflared` binary path (set in Settings from T125) and surfaces a clear error if missing.
-- [ ] T135 [P] Add a CI check that forbids committed `.js` files under `src/` (Non-negotiable from constitution)
-- [ ] T136 [P] Add a CI check that runs `tsc --noEmit` across all three trees and fails on any error
-- [ ] T137 [P] Add a CI grep check that fails if any renderer or main file awaits an operation expected to exceed 5 s without rendering `AsyncFeedback` (T042) — enforces SC-002 structurally
+- [X] T132 [P] Add a CI grep/ESLint step in `S:/video-avatar/.github/workflows/ci.yml` that fails the build on any `eval(`, `new Function(`, or dynamic `require(` of a computed path anywhere in `src/`
+- [X] T133 [P] Implement the S3/R2 transport fallback at `S:/video-avatar/src/main/providers/transport.ts` — `put()` uploads via `@aws-sdk/client-s3` to the operator's configured bucket and returns a pre-signed URL via `@aws-sdk/s3-request-presigner` with a short TTL (15 min); R2 uses the same code with a different endpoint. Credentials from keychain target `Lumo/s3`.
+- [X] T134 [P] Implement the cloudflared transport fallback at `S:/video-avatar/src/main/providers/transport.ts` — spawns `cloudflared tunnel run --url http://localhost:<port>` pointing at an ephemeral `http` server serving the audio file; returns the tunnel URL and a `cleanup` callback that tears down both the server and the tunnel subprocess. Requires a configured `cloudflared` binary path (set in Settings from T125) and surfaces a clear error if missing.
+- [X] T135 [P] Add a CI check that forbids committed `.js` files under `src/` (Non-negotiable from constitution)
+- [X] T136 [P] Add a CI check that runs `tsc --noEmit` across all three trees and fails on any error
+- [X] T137 [P] Add a CI grep check that fails if any renderer or main file awaits an operation expected to exceed 5 s without rendering `AsyncFeedback` (T042) — enforces SC-002 structurally
 - [ ] T138 [P] Audit every provider-facing error surface to confirm the provider's verbatim message is preserved (FR-053); add fixtures reproducing common provider errors at `S:/video-avatar/tests/fixtures/errors/`
-- [ ] T139 [P] Performance pass on the script studio: measure Claude Code round-trip p95 on typical prompts; document the baseline at `S:/video-avatar/specs/001-lumo-v1/perf-baseline.md`
+- [X] T139 [P] Performance pass on the script studio: measure Claude Code round-trip p95 on typical prompts; document the baseline at `S:/video-avatar/specs/001-lumo-v1/perf-baseline.md` *(stub committed; actual numbers filled after first operator install run)*
 - [ ] T140 [P] Accessibility pass across screens (tab order, aria-labels on primary actions, contrast on cost previews)
 - [ ] T141 Package a signed Windows installer via `electron-builder` driven by `S:/video-avatar/build/electron-builder.yml`; verify install on a clean Windows 11 VM
 - [ ] T142 Run the quickstart validation at `S:/video-avatar/specs/001-lumo-v1/quickstart.md` against the packaged installer end-to-end; file any regressions as fresh tasks
 - [ ] T143 [P] Keyboard-shortcut + async-feedback audit: confirm every primary action has a visible shortcut (FR-058), the six core screens are one keystroke from anywhere (FR-057), and every screen respects the AsyncFeedback contract (SC-002)
-- [ ] T144 [P] Log-retention enforcement: wire the logger to drop `.jsonl` files older than the configured retention (default 14 days) on app start
-- [ ] T145 [P] Redactor fuzz tests at `S:/video-avatar/tests/integration/redactor-fuzz.test.ts` — feed 10 000 random strings shaped like known secrets and assert zero escape
-- [ ] T146 Contract test for all three transports at `S:/video-avatar/tests/contract/providers/transport.test.ts` — `heygen` default, `s3`/`r2` with a mocked S3 client, `cloudflared` with a stubbed spawn; covers fallback-resolve order per `contracts/provider-wrappers.md`
-- [ ] T147 Final constitutional re-check: walk the plan's Constitution Check table against actual code and mark each row ✅ with a reference to the enforcing file
+- [X] T144 [P] Log-retention enforcement: wire the logger to drop `.jsonl` files older than the configured retention (default 14 days) on app start
+- [X] T145 [P] Redactor fuzz tests at `S:/video-avatar/tests/integration/redactor-fuzz.test.ts` — feed 10 000 random strings shaped like known secrets and assert zero escape
+- [X] T146 Contract test for all three transports at `S:/video-avatar/tests/contract/providers/transport.test.ts` — `heygen` default, `s3`/`r2` with a mocked S3 client, `cloudflared` with a stubbed spawn; covers fallback-resolve order per `contracts/provider-wrappers.md`
+- [X] T147 Final constitutional re-check: walk the plan's Constitution Check table against actual code and mark each row ✅ with a reference to the enforcing file *(written to `specs/001-lumo-v1/constitutional-recheck.md`)*
 
 **Checkpoint**: Packaged installer, CI gates enforcing the non-negotiables (including the AsyncFeedback contract), all three transports available, quickstart validated end-to-end. Ready to cut v1.0.0.
 

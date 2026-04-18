@@ -58,6 +58,10 @@ module.exports = {
         // assertions; the Non-negotiable #5 rule applies to production code
         // under src/.
         'lumo/no-inline-fetch': 'off',
+        // Test fixtures routinely build strings that look like paths
+        // (AWS credential shapes, URL templates, etc.). The rule enforces
+        // path.resolve/path.join in production code under src/.
+        'lumo/no-string-concat-paths': 'off',
       },
     },
   ],

@@ -53,6 +53,40 @@ jobs:
             exit 1
           fi
 
+      # SC-002 structural contract: every renderer file that awaits a known
+      # long-running IPC channel must also mount an AsyncFeedback component.
+      # "Long-running" is defined as anything whose server-side pipeline
+      # crosses ElevenLabs / HeyGen / Remotion — training, generation, render.
+      - name: AsyncFeedback gate (SC-002)
+        shell: bash
+        run: |
+          set -eu
+          patterns=(
+            'lumo\.voices\.train'
+            'lumo\.voices\.saveRecording'
+            'lumo\.avatars\.trainPhoto'
+            'lumo\.avatars\.trainInstant'
+            'lumo\.generate\.run'
+            'lumo\.compose\.render'
+            'lumo\.scripts\.generate'
+            'lumo\.scripts\.assist'
+          )
+          fail=0
+          while IFS= read -r file; do
+            for p in "${patterns[@]}"; do
+              if grep -qE "$p" "$file"; then
+                if ! grep -qE 'AsyncFeedback' "$file"; then
+                  echo "::error file=$file::$file awaits a long-running IPC call matching /$p/ but does not mount <AsyncFeedback>. SC-002 requires every >5s async op to render AsyncFeedback."
+                  fail=1
+                fi
+                break
+              fi
+            done
+          done < <(git ls-files 'src/renderer/**/*.tsx' 'src/renderer/**/*.ts')
+          if [ "$fail" -ne 0 ]; then
+            exit 1
+          fi
+
       # Build + UI tests only run once there is actual source to build. Per
       # constitution §Governance → "Continuous integration gate", we prefer
       # skipping a step over letting it fail under continue-on-error

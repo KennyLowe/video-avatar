@@ -87,6 +87,9 @@ module.exports = {
         // Skip templates that contain regex-shape escapes (\s, \b, \d, \w, \n,
         // \r, \t) — they're almost never filesystem paths.
         if (/\\[sdwbnrt]/.test(allStatic)) return;
+        // Skip templates that contain a URL scheme (`http://`, `s3://`, etc.)
+        // anywhere in their static parts — those are URLs, not paths.
+        if (/:\/\//.test(allStatic)) return;
         if (/[\\/][^\\/\s]+/.test(allStatic)) {
           context.report({ node, messageId: 'concatPath' });
         }
