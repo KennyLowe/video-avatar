@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { logger } from '@main/logging/jsonl.js';
 import { ProviderError } from '@shared/errors.js';
+import { stripMarkdownFences } from '@main/services/stripFences.js';
 import type { ClaudeVerifyResult } from '@shared/schemas/claudeCode.js';
 
 // Real implementation per plan.md §Technical Requirements → FR-001 + FR-010.
@@ -154,31 +155,48 @@ export async function invoke<T = unknown>(
         return;
       }
 
-      if (opts.outputFormat === 'json') {
-        try {
-          const parsed = JSON.parse(stdoutBuf) as T;
-          resolvePromise({ raw: stdoutBuf, parsed, durationMs, stderr: stderrBuf });
-        } catch (cause) {
-          reject(
-            new ProviderError({
-              provider: 'claudeCode',
-              code: 'invalid_json',
-              message: 'Claude Code returned non-JSON output under --output-format json.',
-              nextStep:
-                'Check the system prompt; the model likely narrated instead of emitting JSON.',
-              cause,
-            }),
-          );
+      // Claude Code CLI's --output-format json emits a result envelope
+      // ({ type, subtype, is_error, result, session_id, ... }) whose `result`
+      // field is a STRING containing the model's actual message. We unwrap
+      // that envelope, surface is_error=true as a ProviderError, and for
+      // our own outputFormat='json' callers we JSON.parse the inner string
+      // so downstream code gets the parsed model response, not the
+      // envelope. If the stdout turns out NOT to be an envelope (older CLI,
+      // unexpected shape) we fall back to parsing it directly.
+      try {
+        const modelString = extractModelString(stdoutBuf);
+        if (opts.outputFormat === 'json') {
+          const parsed = JSON.parse(stripMarkdownFences(modelString)) as T;
+          resolvePromise({ raw: modelString, parsed, durationMs, stderr: stderrBuf });
+        } else {
+          resolvePromise({
+            raw: modelString,
+            parsed: modelString as unknown as T,
+            durationMs,
+            stderr: stderrBuf,
+          });
         }
-        return;
+      } catch (cause) {
+        // extractModelString itself throws ProviderError for CLI-reported
+        // errors (is_error=true); pass those through unchanged.
+        if (cause instanceof ProviderError) {
+          reject(cause);
+          return;
+        }
+        reject(
+          new ProviderError({
+            provider: 'claudeCode',
+            code: 'invalid_json',
+            message:
+              opts.outputFormat === 'json'
+                ? 'Claude Code returned non-JSON output under --output-format json.'
+                : 'Claude Code produced an unparseable response envelope.',
+            nextStep:
+              'Check the system prompt; the model likely narrated instead of emitting JSON.',
+            cause,
+          }),
+        );
       }
-
-      resolvePromise({
-        raw: stdoutBuf,
-        parsed: stdoutBuf as unknown as T,
-        durationMs,
-        stderr: stderrBuf,
-      });
     });
 
     if (promptForStdin) {
@@ -235,6 +253,43 @@ export async function verifyInstalled(): Promise<ClaudeVerifyResult> {
     });
     return { installed: true, authenticated: true, version, reason: 'probe_error_soft' };
   }
+}
+
+interface ClaudeCliEnvelope {
+  readonly type?: string;
+  readonly subtype?: string;
+  readonly is_error?: boolean;
+  readonly result?: string;
+}
+
+// Claude Code CLI --output-format json wraps the model's reply in a result
+// envelope. Unwrap to the inner string. If stdout doesn't match the
+// envelope shape we return it verbatim so older CLI versions and the
+// --output-format text path both work.
+function extractModelString(stdout: string): string {
+  const trimmed = stdout.trim();
+  if (trimmed.length === 0) return trimmed;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    return trimmed;
+  }
+  if (parsed === null || typeof parsed !== 'object') return trimmed;
+  const env = parsed as ClaudeCliEnvelope;
+  if (env.is_error === true) {
+    throw new ProviderError({
+      provider: 'claudeCode',
+      code: 'cli_reported_error',
+      message: typeof env.result === 'string' && env.result.length > 0
+        ? env.result
+        : `Claude Code CLI reported an error (subtype=${env.subtype ?? 'unknown'}).`,
+      nextStep: 'Re-run `claude /login` if auth failed, or retry the prompt.',
+    });
+  }
+  if (typeof env.result === 'string') return env.result;
+  // Not an envelope — treat the whole thing as the model's output.
+  return trimmed;
 }
 
 async function probeVersion(): Promise<string | null> {

@@ -75,7 +75,19 @@ describe('claudeCode.invoke (JSON mode)', () => {
       outputFormat: 'json',
     });
 
-    child.stdout.push('{"ok":1}');
+    // Mirror the real Claude Code CLI --output-format json envelope: the
+    // model's actual reply is a string in the `result` field that itself
+    // contains our requested JSON.
+    const envelope = {
+      type: 'result',
+      subtype: 'success',
+      is_error: false,
+      result: '{"ok":1}',
+      session_id: 'test-session',
+      total_cost_usd: 0,
+      duration_ms: 10,
+    };
+    child.stdout.push(JSON.stringify(envelope));
     child.stdout.push(null);
     await flushIO();
     child.emit('close', 0);
@@ -114,7 +126,17 @@ describe('claudeCode.invoke (JSON mode)', () => {
       outputFormat: 'json',
     });
 
-    child.stdout.push('hello not json');
+    // Envelope present, but the `result` string itself isn't JSON — the
+    // caller asked for JSON output so extractModelString's JSON.parse of
+    // the inner string will blow up.
+    child.stdout.push(
+      JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        is_error: false,
+        result: 'hello not json',
+      }),
+    );
     child.stdout.push(null);
     await flushIO();
     child.emit('close', 0);
@@ -122,6 +144,35 @@ describe('claudeCode.invoke (JSON mode)', () => {
     await expect(promise).rejects.toMatchObject({
       provider: 'claudeCode',
       code: 'invalid_json',
+    });
+  });
+
+  it('propagates CLI-reported errors as cli_reported_error', async () => {
+    const child = makeFakeChild();
+    spawnQueue.push(child);
+
+    const promise = claudeCode.invoke({
+      model: 'claude-opus-4-7',
+      prompt: 'p',
+      outputFormat: 'json',
+    });
+
+    child.stdout.push(
+      JSON.stringify({
+        type: 'result',
+        subtype: 'error_auth',
+        is_error: true,
+        result: 'Not authenticated — please run `claude /login`.',
+      }),
+    );
+    child.stdout.push(null);
+    await flushIO();
+    child.emit('close', 0);
+
+    await expect(promise).rejects.toMatchObject({
+      provider: 'claudeCode',
+      code: 'cli_reported_error',
+      message: expect.stringContaining('Not authenticated'),
     });
   });
 
