@@ -44,4 +44,16 @@ export class CostsRepository extends RepositoryBase {
       .all(cutoff) as Array<{ provider: CostEntry['provider']; totalUsd: number }>;
     return rows;
   }
+
+  listAll(): CostEntry[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, job_id AS jobId, provider, operation, units,
+                unit_kind AS unitKind, usd_estimate AS usdEstimate,
+                recorded_at AS recordedAt
+         FROM costs ORDER BY recorded_at DESC`,
+      )
+      .all() as CostEntry[];
+    return rows;
+  }
 }

@@ -1,16 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { lumo, unwrap } from '@renderer/lib/lumo.js';
 import { ClaudeBanner } from '@renderer/components/ClaudeBanner.js';
 import { AsyncFeedback } from '@renderer/components/AsyncFeedback.js';
+import { DeleteProjectDialog } from '@renderer/components/DeleteProjectDialog.js';
 import type { Project, ProjectSummary } from '@shared/schemas/project.js';
 
-// Minimal Home shell per T040. Lets the operator:
-//   - Pick a projects root on first run (or change it in Settings later).
-//   - List existing projects in the root.
-//   - Create a new project.
-//   - Open an existing project.
-// The full grid with thumbnails, quick actions, and a delete flow lands in
-// Phase 7 T118 / T119.
+// Home per FR-008. Project grid with last-modified + per-project actions
+// (open, rename, duplicate, delete, reveal). Delete goes through the two-
+// step confirmation dialog (FR-009); backend uses shell.trashItem so the
+// folder is recoverable from the Recycle Bin.
 
 interface Props {
   onOpenProject?: (slug: string) => void;
@@ -22,12 +20,11 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
   const [loading, setLoading] = useState(true);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [claudeOk, setClaudeOk] = useState(false);
+  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<ProjectSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void refresh();
-  }, []);
-
-  async function refresh(): Promise<void> {
+  const refresh = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
       const settings = await unwrap(lumo.settings.get());
@@ -41,7 +38,11 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   async function pickRoot(): Promise<void> {
     setPendingAction('Choosing projects folder…');
@@ -79,6 +80,49 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
     }
   }
 
+  async function renameProject(summary: ProjectSummary): Promise<void> {
+    const next = window.prompt('New project name', summary.name);
+    if (next === null || next.trim().length === 0 || next.trim() === summary.name) return;
+    setPendingAction('Renaming…');
+    setError(null);
+    try {
+      await unwrap(lumo.projects.rename({ slug: summary.slug, newName: next.trim() }));
+      await refresh();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function duplicateProject(summary: ProjectSummary): Promise<void> {
+    setPendingAction(`Duplicating ${summary.name}…`);
+    setError(null);
+    try {
+      await unwrap(lumo.projects.duplicate({ slug: summary.slug }));
+      await refresh();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function revealProject(summary: ProjectSummary): Promise<void> {
+    try {
+      await unwrap(lumo.projects.revealInExplorer({ slug: summary.slug }));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function confirmDelete(): Promise<void> {
+    if (deleting === null) return;
+    await unwrap(lumo.projects.delete({ slug: deleting.slug, confirmName: deleting.name }));
+    setDeleting(null);
+    await refresh();
+  }
+
   return (
     <main className="lumo-home">
       <ClaudeBanner onResolved={() => setClaudeOk(true)} />
@@ -108,6 +152,7 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
       </section>
 
       {pendingAction !== null ? <AsyncFeedback kind="typical" hint={pendingAction} /> : null}
+      {error !== null ? <div className="lumo-banner lumo-banner--block">{error}</div> : null}
 
       {loading ? (
         <AsyncFeedback kind="typical" hint="Loading projects…" />
@@ -116,17 +161,71 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
           <p className="lumo-home__empty">No projects yet. Create your first one above.</p>
         )
       ) : (
-        <ul className="lumo-home__list">
+        <ul className="lumo-home__grid">
           {summaries.map((s) => (
-            <li key={s.id}>
-              <button type="button" onClick={() => void openProject(s.slug)}>
+            <li key={s.id} className="lumo-project-card">
+              <button
+                type="button"
+                className="lumo-project-card__open"
+                onClick={() => void openProject(s.slug)}
+              >
                 <strong>{s.name}</strong>
-                <span className="lumo-home__slug">{s.slug}</span>
+                <span className="lumo-project-card__slug">{s.slug}</span>
+                {s.lastModifiedAt !== null ? (
+                  <span className="lumo-project-card__meta">
+                    modified {formatRelative(s.lastModifiedAt)}
+                  </span>
+                ) : null}
               </button>
+              <details
+                className="lumo-project-card__menu"
+                open={menuOpenFor === s.slug}
+                onToggle={(e) =>
+                  setMenuOpenFor((e.currentTarget as HTMLDetailsElement).open ? s.slug : null)
+                }
+              >
+                <summary aria-label={`Actions for ${s.name}`}>⋯</summary>
+                <div className="lumo-project-card__menu-list">
+                  <button type="button" onClick={() => void renameProject(s)}>
+                    Rename…
+                  </button>
+                  <button type="button" onClick={() => void duplicateProject(s)}>
+                    Duplicate
+                  </button>
+                  <button type="button" onClick={() => void revealProject(s)}>
+                    Reveal in Explorer
+                  </button>
+                  <button type="button" onClick={() => setDeleting(s)} className="lumo-danger">
+                    Delete…
+                  </button>
+                </div>
+              </details>
             </li>
           ))}
         </ul>
       )}
+
+      {deleting !== null ? (
+        <DeleteProjectDialog
+          projectName={deleting.name}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleting(null)}
+        />
+      ) : null}
     </main>
   );
+}
+
+function formatRelative(iso: string): string {
+  const now = Date.now();
+  const then = new Date(iso).getTime();
+  const diffMs = now - then;
+  const minutes = Math.round(diffMs / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return `${days} d ago`;
+  return new Date(iso).toLocaleDateString();
 }

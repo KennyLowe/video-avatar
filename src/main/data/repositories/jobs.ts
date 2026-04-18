@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3';
 import { RepositoryBase } from './base.js';
+import { emitJobUpdated } from '@main/workers/jobEvents.js';
 import type { Job } from '@shared/schemas/job.js';
 
 // jobs table repository. Used by the worker and the ipc/jobs surface.
@@ -62,6 +63,22 @@ export class JobsRepository extends RepositoryBase {
     return rows.map((r) => ({ ...r, notifyOnComplete: r.notifyOnComplete === 1 }));
   }
 
+  listHistory(limit: number): Job[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, provider, provider_job_id AS providerJobId, kind,
+                input_ref AS inputRef, output_path AS outputPath, status,
+                last_polled_at AS lastPolledAt, next_poll_at AS nextPollAt,
+                attempt, error, notify_on_complete AS notifyOnComplete,
+                created_at AS createdAt
+         FROM jobs
+         WHERE status IN ('done', 'failed', 'canceled')
+         ORDER BY created_at DESC LIMIT ?`,
+      )
+      .all(limit) as Array<Omit<Job, 'notifyOnComplete'> & { notifyOnComplete: number }>;
+    return rows.map((r) => ({ ...r, notifyOnComplete: r.notifyOnComplete === 1 }));
+  }
+
   updateStatus(id: number, patch: Partial<Job>): void {
     const setClauses: string[] = [];
     const values: unknown[] = [];
@@ -98,5 +115,8 @@ export class JobsRepository extends RepositoryBase {
     this.db
       .prepare(`UPDATE jobs SET ${setClauses.join(', ')} WHERE id = ?`)
       .run(...(values as unknown[]));
+    // Broadcast to the renderer so the JobsTray / useJobs hook stay live.
+    const updated = this.get(id);
+    if (updated !== null) emitJobUpdated(this.slug, updated);
   }
 }

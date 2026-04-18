@@ -239,24 +239,24 @@ Electron single-repo layout per `plan.md`:
 
 ### Implementation for User Story 5
 
-- [ ] T117 [US5] Extend `projects.*` IPC handlers at `S:/video-avatar/src/main/ipc/projects.ts` with `rename`, `duplicate`, `delete`, and `revealInExplorer`; delete uses `shell.trashItem` to move the folder to the Windows Recycle Bin (FR-009)
-- [ ] T118 [US5] [P] Enrich the Home screen at `S:/video-avatar/src/renderer/screens/Home.tsx` (built minimally in T040) with project grid, last-modified + last-render thumbnail, quick actions menu, and rename/duplicate/delete entry points
-- [ ] T119 [US5] [P] Build the two-step delete-project confirmation modal at `S:/video-avatar/src/renderer/components/DeleteProjectDialog.tsx` that requires typing the project name verbatim
-- [ ] T120 [US5] Implement `costs.*` IPC handlers in `S:/video-avatar/src/main/ipc/costs.ts` (`mtd`, `ledger`, `exportCsv`) per `contracts/ipc-bridge.md`; `mtd` returns both the local-ledger sum and any provider-reported MTD (from `testKey` payloads) so the UI can render them side-by-side per FR-050
-- [ ] T121 [US5] Audit every job handler to confirm it writes a `costs` row on completion of a paid op (hooks scoped in T057, T075, T090); fix any gap
-- [ ] T122 [US5] Implement `jobs.*` IPC handlers in `S:/video-avatar/src/main/ipc/jobs.ts` (`listActive`, `listHistory`, `cancel`, `showLog`, `onUpdate` push channel)
-- [ ] T123 [US5] [P] Build the persistent JobsTray component at `S:/video-avatar/src/renderer/components/JobsTray.tsx` — bottom strip on every screen, collapse/expand, per-job progress via the AsyncFeedback contract (T042), cancel, log link
-- [ ] T124 [US5] [P] Build the full Jobs panel at `S:/video-avatar/src/renderer/screens/Jobs.tsx` with active + history tabs and a filter by kind/provider
-- [ ] T125 [US5] [P] Build the full Settings screen at `S:/video-avatar/src/renderer/screens/Settings.tsx` — providers (keys + test + status), Claude Code defaults, **upload transport config including S3/R2 bucket + credentials and cloudflared binary path**, render defaults, projects root, logs folder + retention + level, appearance
-- [ ] T126 [US5] [P] Build the ProviderStatus card at `S:/video-avatar/src/renderer/components/ProviderStatus.tsx` showing per-provider authenticated yes/no, plan name, and **both local-ledger MTD and provider-reported MTD side-by-side per FR-050**, plus a link to the provider's dashboard
-- [ ] T127 [US5] Wire `jobs.onUpdate` into a `useJobs` hook at `S:/video-avatar/src/renderer/hooks/useJobs.ts` that backs the tray and Jobs panel
-- [ ] T128 [US5] Implement CSV export at `<projects-root>/<project>/exports/costs-<date>.csv` with headers `timestamp,provider,operation,units,unit_kind,usd_estimate,project_id,job_id`
+- [X] T117 [US5] Extend `projects.*` IPC handlers at `S:/video-avatar/src/main/ipc/projects.ts` with `rename`, `duplicate`, `delete`, and `revealInExplorer`; delete uses `shell.trashItem` to move the folder to the Windows Recycle Bin (FR-009)
+- [X] T118 [US5] [P] Enrich the Home screen at `S:/video-avatar/src/renderer/screens/Home.tsx` (built minimally in T040) with project grid, last-modified + last-render thumbnail, quick actions menu, and rename/duplicate/delete entry points
+- [X] T119 [US5] [P] Build the two-step delete-project confirmation modal at `S:/video-avatar/src/renderer/components/DeleteProjectDialog.tsx` that requires typing the project name verbatim
+- [X] T120 [US5] Implement `costs.*` IPC handlers in `S:/video-avatar/src/main/ipc/costs.ts` (`mtd`, `ledger`, `exportCsv`) per `contracts/ipc-bridge.md`; `mtd` returns both the local-ledger sum and any provider-reported MTD (from `testKey` payloads) so the UI can render them side-by-side per FR-050
+- [X] T121 [US5] Audit every job handler to confirm it writes a `costs` row on completion of a paid op (hooks scoped in T057, T075, T090); fix any gap
+- [X] T122 [US5] Implement `jobs.*` IPC handlers in `S:/video-avatar/src/main/ipc/jobs.ts` (`listActive`, `listHistory`, `cancel`, `showLog`, `onUpdate` push channel)
+- [X] T123 [US5] [P] Build the persistent JobsTray component at `S:/video-avatar/src/renderer/components/JobsTray.tsx` — bottom strip on every screen, collapse/expand, per-job progress via the AsyncFeedback contract (T042), cancel, log link
+- [X] T124 [US5] [P] Build the full Jobs panel at `S:/video-avatar/src/renderer/screens/Jobs.tsx` with active + history tabs and a filter by kind/provider
+- [X] T125 [US5] [P] Build the full Settings screen at `S:/video-avatar/src/renderer/screens/Settings.tsx` — providers (keys + test + status), Claude Code defaults, **upload transport config including S3/R2 bucket + credentials and cloudflared binary path**, render defaults, projects root, logs folder + retention + level, appearance
+- [X] T126 [US5] [P] Build the ProviderStatus card at `S:/video-avatar/src/renderer/components/ProviderStatus.tsx` showing per-provider authenticated yes/no, plan name, and **both local-ledger MTD and provider-reported MTD side-by-side per FR-050**, plus a link to the provider's dashboard
+- [X] T127 [US5] Wire `jobs.onUpdate` into a `useJobs` hook at `S:/video-avatar/src/renderer/hooks/useJobs.ts` that backs the tray and Jobs panel
+- [X] T128 [US5] Implement CSV export at `<projects-root>/<project>/exports/costs-<date>.csv` with headers `timestamp,provider,operation,units,unit_kind,usd_estimate,project_id,job_id`
 
 ### Tests for User Story 5
 
 - [ ] T129 [P] [US5] Integration test at `S:/video-avatar/tests/integration/costLedger.test.ts` covering ledger writes for each paid op, combined MTD calculation, and CSV export shape
 - [ ] T130 [P] [US5] Integration test at `S:/video-avatar/tests/integration/projectsLifecycle.test.ts` covering create → rename → duplicate → delete (Recycle Bin verified via stub)
-- [ ] T131 [US5] Playwright-Electron spec at `S:/video-avatar/tests/ui/p5-cost-and-jobs.spec.ts` covering two-project flow, tray across screen changes, combined-MTD panel rendering, and CSV export
+- [X] T131 [US5] Playwright-Electron spec at `S:/video-avatar/tests/ui/p5-cost-and-jobs.spec.ts` covering two-project flow, tray across screen changes, combined-MTD panel rendering, and CSV export
 
 **Checkpoint**: All operational ergonomics land; every paid op shows up on the ledger; tray is present on every screen; deletes go to the Recycle Bin; MTD panel renders the local + provider-reported pair.
 

@@ -5,12 +5,17 @@ import { Avatar } from './screens/Avatar.js';
 import { Script } from './screens/Script.js';
 import { Generate } from './screens/Generate.js';
 import { Compose } from './screens/Compose.js';
+import { Jobs } from './screens/Jobs.js';
+import { Settings } from './screens/Settings.js';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts.js';
+import { useJobs } from './hooks/useJobs.js';
+import { JobsTray } from './components/JobsTray.js';
 
-// Routes Home ↔ Voice ↔ Avatar ↔ Script ↔ Generate ↔ Compose. Jobs / Settings
-// arrive with their respective user stories.
+// Routes every screen. Jobs reached via Ctrl+J, Settings via Ctrl+,.
+// JobsTray is rendered globally so operators always see pipeline status
+// regardless of which screen they're on (FR-043).
 
-type Screen = 'home' | 'voice' | 'avatar' | 'script' | 'generate' | 'compose';
+type Screen = 'home' | 'voice' | 'avatar' | 'script' | 'generate' | 'compose' | 'jobs' | 'settings';
 
 const SCREEN_LABELS: Record<Screen, string> = {
   home: 'Home',
@@ -19,11 +24,14 @@ const SCREEN_LABELS: Record<Screen, string> = {
   script: 'Script',
   generate: 'Generate',
   compose: 'Compose',
+  jobs: 'Jobs',
+  settings: 'Settings',
 };
 
 export function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('home');
   const [projectSlug, setProjectSlug] = useState<string | null>(null);
+  const jobsState = useJobs(projectSlug);
 
   useKeyboardShortcuts([
     { combo: 'mod+0', handler: () => setScreen('home') },
@@ -32,10 +40,12 @@ export function App(): JSX.Element {
     { combo: 'mod+3', handler: () => projectSlug !== null && setScreen('script') },
     { combo: 'mod+4', handler: () => projectSlug !== null && setScreen('generate') },
     { combo: 'mod+5', handler: () => projectSlug !== null && setScreen('compose') },
+    { combo: 'mod+j', handler: () => setScreen('jobs') },
+    { combo: 'mod+,', handler: () => setScreen('settings') },
   ]);
 
   function renderScreen(): JSX.Element {
-    if (projectSlug === null) {
+    if (projectSlug === null && screen !== 'settings') {
       return (
         <Home
           onOpenProject={(slug) => {
@@ -47,15 +57,21 @@ export function App(): JSX.Element {
     }
     switch (screen) {
       case 'voice':
-        return <Voice projectSlug={projectSlug} />;
+        return projectSlug !== null ? <Voice projectSlug={projectSlug} /> : <Home />;
       case 'avatar':
-        return <Avatar projectSlug={projectSlug} />;
+        return projectSlug !== null ? <Avatar projectSlug={projectSlug} /> : <Home />;
       case 'script':
-        return <Script projectSlug={projectSlug} />;
+        return projectSlug !== null ? <Script projectSlug={projectSlug} /> : <Home />;
       case 'generate':
-        return <Generate projectSlug={projectSlug} />;
+        return projectSlug !== null ? <Generate projectSlug={projectSlug} /> : <Home />;
       case 'compose':
-        return <Compose projectSlug={projectSlug} />;
+        return projectSlug !== null ? <Compose projectSlug={projectSlug} /> : <Home />;
+      case 'jobs':
+        return (
+          <Jobs active={jobsState.active} history={jobsState.history} onCancel={jobsState.cancel} />
+        );
+      case 'settings':
+        return <Settings projectSlug={projectSlug} />;
       default:
         return (
           <Home
@@ -72,6 +88,13 @@ export function App(): JSX.Element {
     <div className="lumo-app">
       {projectSlug !== null ? <TopNav current={screen} onNavigate={setScreen} /> : null}
       {renderScreen()}
+      {projectSlug !== null ? (
+        <JobsTray
+          active={jobsState.active}
+          onCancel={jobsState.cancel}
+          onOpenPanel={() => setScreen('jobs')}
+        />
+      ) : null}
     </div>
   );
 }
@@ -102,6 +125,12 @@ function TopNav({
       </button>
       <button type="button" onClick={() => onNavigate('compose')} aria-keyshortcuts="Control+5">
         Compose <kbd>Ctrl+5</kbd>
+      </button>
+      <button type="button" onClick={() => onNavigate('jobs')} aria-keyshortcuts="Control+J">
+        Jobs <kbd>Ctrl+J</kbd>
+      </button>
+      <button type="button" onClick={() => onNavigate('settings')} aria-keyshortcuts="Control+,">
+        Settings <kbd>Ctrl+,</kbd>
       </button>
       <span className="lumo-muted">current: {SCREEN_LABELS[current]}</span>
     </nav>

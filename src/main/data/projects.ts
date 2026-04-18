@@ -1,9 +1,18 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, statSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+  statSync,
+  cpSync,
+} from 'node:fs';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { shell } from 'electron';
 import { ProjectSchema, type Project, type ProjectSummary } from '@shared/schemas/project.js';
 import { PROJECT_SUBFOLDERS, projectDir, projectMetadataPath } from '@main/platform/paths.js';
-import { openProjectDb } from './db.js';
+import { closeProjectDb, openProjectDb } from './db.js';
 
 // Project metadata lives on disk as `<project>/project.json`. The SQLite file
 // is the operational state; `project.json` is the durable descriptor we expect
@@ -78,6 +87,64 @@ export function writeProject(projectsRoot: string, project: Project): void {
     JSON.stringify(project, null, 2),
     'utf-8',
   );
+}
+
+export function renameProject(projectsRoot: string, slug: string, newName: string): Project {
+  const meta = projectMetadataPath(projectsRoot, slug);
+  if (!existsSync(meta)) throw new Error(`No project at ${meta}`);
+  const project = ProjectSchema.parse(JSON.parse(readFileSync(meta, 'utf-8')));
+  const next: Project = { ...project, name: newName };
+  writeProject(projectsRoot, next);
+  return next;
+}
+
+/**
+ * Duplicate a project: copy its folder to a new slug-disambiguated path,
+ * rewrite project.json with a fresh id and the source name + " (copy)",
+ * and return the new project metadata. The SQLite file is copied verbatim.
+ */
+export function duplicateProject(projectsRoot: string, slug: string): Project {
+  const source = projectDir(projectsRoot, slug);
+  if (!existsSync(source)) throw new Error(`No project folder at ${source}`);
+
+  // Close the source DB so the file isn't locked.
+  closeProjectDb({ projectsRoot, slug });
+
+  const sourceProject = ProjectSchema.parse(
+    JSON.parse(readFileSync(projectMetadataPath(projectsRoot, slug), 'utf-8')),
+  );
+  const newSlug = disambiguateSlug(projectsRoot, `${sourceProject.slug}-copy`);
+  const dest = projectDir(projectsRoot, newSlug);
+
+  cpSync(source, dest, { recursive: true });
+
+  const next: Project = {
+    ...sourceProject,
+    id: randomUUID(),
+    slug: newSlug,
+    name: `${sourceProject.name} (copy)`,
+    createdAt: new Date().toISOString(),
+  };
+  writeProject(projectsRoot, next);
+  return next;
+}
+
+/**
+ * Soft-delete: close the DB, move the entire project folder to the OS
+ * recycle/trash facility. FR-009 requires that the operator can recover
+ * the folder from the Recycle Bin — never hard-delete.
+ */
+export async function deleteProject(projectsRoot: string, slug: string): Promise<void> {
+  const dir = projectDir(projectsRoot, slug);
+  if (!existsSync(dir)) return;
+  closeProjectDb({ projectsRoot, slug });
+  await shell.trashItem(dir);
+}
+
+export async function revealInExplorer(projectsRoot: string, slug: string): Promise<void> {
+  const dir = projectDir(projectsRoot, slug);
+  if (!existsSync(dir)) throw new Error(`No project folder at ${dir}`);
+  shell.showItemInFolder(path.resolve(dir, 'project.json'));
 }
 
 // --- helpers -----------------------------------------------------------

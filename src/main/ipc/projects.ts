@@ -23,6 +23,41 @@ export function registerProjectsIpc(): void {
     const root = requireProjectsRoot();
     return projects.openProject(root, slug);
   });
+
+  handle('projects.rename', async (input) => {
+    const { slug, newName } = input as { slug: string; newName: string };
+    if (newName.trim().length === 0) throw new Error('Project name cannot be empty.');
+    const root = requireProjectsRoot();
+    return projects.renameProject(root, slug, newName.trim());
+  });
+
+  handle('projects.duplicate', async (input) => {
+    const { slug } = input as { slug: string };
+    const root = requireProjectsRoot();
+    return projects.duplicateProject(root, slug);
+  });
+
+  handle('projects.delete', async (input) => {
+    const { slug, confirmName } = input as { slug: string; confirmName: string };
+    const root = requireProjectsRoot();
+    // Two-step delete confirmation gate (FR-009). The renderer asks the
+    // operator to re-type the project name; we re-verify here before
+    // touching the filesystem.
+    const project = projects.openProject(root, slug);
+    if (project.name !== confirmName) {
+      throw new Error(
+        `Delete refused: typed name "${confirmName}" does not match project name "${project.name}".`,
+      );
+    }
+    await projects.deleteProject(root, slug);
+    return { recycled: true as const };
+  });
+
+  handle('projects.revealInExplorer', async (input) => {
+    const { slug } = input as { slug: string };
+    const root = requireProjectsRoot();
+    await projects.revealInExplorer(root, slug);
+  });
 }
 
 function requireProjectsRoot(): string {

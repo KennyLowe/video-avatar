@@ -8,6 +8,7 @@ import type { Take } from './schemas/take.js';
 import type { Avatar, AvatarTier } from './schemas/avatar.js';
 import type { Segment } from './schemas/segment.js';
 import type { Job } from './schemas/job.js';
+import type { CostEntry } from './schemas/costEntry.js';
 import type { ProviderErrorShape } from './errors.js';
 
 // Shape of the bridge exposed at window.lumo. Types live in shared/ so both
@@ -46,6 +47,38 @@ export interface LumoBridge {
     list: () => Promise<IpcEnvelope<ProjectSummary[]>>;
     create: (input: { name: string }) => Promise<IpcEnvelope<Project>>;
     open: (input: { slug: string }) => Promise<IpcEnvelope<Project>>;
+    rename: (input: { slug: string; newName: string }) => Promise<IpcEnvelope<Project>>;
+    duplicate: (input: { slug: string }) => Promise<IpcEnvelope<Project>>;
+    delete: (input: {
+      slug: string;
+      confirmName: string;
+    }) => Promise<IpcEnvelope<{ recycled: true }>>;
+    revealInExplorer: (input: { slug: string }) => Promise<IpcEnvelope<void>>;
+  };
+  jobs: {
+    listActive: (input: { slug: string }) => Promise<IpcEnvelope<Job[]>>;
+    listHistory: (input: { slug: string; limit?: number }) => Promise<IpcEnvelope<Job[]>>;
+    cancel: (input: {
+      slug: string;
+      jobId: number;
+    }) => Promise<IpcEnvelope<{ cancelled: boolean }>>;
+    showLog: () => Promise<IpcEnvelope<{ path: string }>>;
+    onUpdate: (listener: (update: { slug: string; job: Job }) => void) => () => void;
+  };
+  costs: {
+    mtd: (input: { slug: string }) => Promise<
+      IpcEnvelope<{
+        local: { elevenlabs: number; heygen: number; total: number };
+        providerReported: {
+          elevenlabs: { plan: string; mtdCredits: number | null } | null;
+          heygen: { plan: string; mtdCredits: number | null } | null;
+        };
+      }>
+    >;
+    ledger: (input: { slug: string }) => Promise<IpcEnvelope<CostEntry[]>>;
+    exportCsv: (input: {
+      slug: string;
+    }) => Promise<IpcEnvelope<{ path: string; rowCount: number }>>;
   };
   settings: {
     get: () => Promise<IpcEnvelope<AppSettings>>;

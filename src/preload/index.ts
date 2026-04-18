@@ -10,6 +10,29 @@ const bridge: LumoBridge = {
     list: () => ipcRenderer.invoke('projects.list'),
     create: (input) => ipcRenderer.invoke('projects.create', input),
     open: (input) => ipcRenderer.invoke('projects.open', input),
+    rename: (input) => ipcRenderer.invoke('projects.rename', input),
+    duplicate: (input) => ipcRenderer.invoke('projects.duplicate', input),
+    delete: (input) => ipcRenderer.invoke('projects.delete', input),
+    revealInExplorer: (input) => ipcRenderer.invoke('projects.revealInExplorer', input),
+  },
+  jobs: {
+    listActive: (input) => ipcRenderer.invoke('jobs.listActive', input),
+    listHistory: (input) => ipcRenderer.invoke('jobs.listHistory', input),
+    cancel: (input) => ipcRenderer.invoke('jobs.cancel', input),
+    showLog: () => ipcRenderer.invoke('jobs.showLog'),
+    onUpdate: (listener) => {
+      const wrapped = (
+        _event: Electron.IpcRendererEvent,
+        payload: Parameters<typeof listener>[0],
+      ): void => listener(payload);
+      ipcRenderer.on('jobs.update', wrapped);
+      return () => ipcRenderer.off('jobs.update', wrapped);
+    },
+  },
+  costs: {
+    mtd: (input) => ipcRenderer.invoke('costs.mtd', input),
+    ledger: (input) => ipcRenderer.invoke('costs.ledger', input),
+    exportCsv: (input) => ipcRenderer.invoke('costs.exportCsv', input),
   },
   settings: {
     get: () => ipcRenderer.invoke('settings.get'),

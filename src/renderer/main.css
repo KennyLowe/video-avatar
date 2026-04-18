@@ -567,3 +567,263 @@ code {
   font-size: 12px;
   margin-top: 12px;
 }
+
+/* --- Phase 7 additions: Jobs tray, Home grid, Settings, provider status */
+
+.lumo-app {
+  padding-bottom: 80px; /* reserve space for the Jobs tray. */
+}
+
+.lumo-topnav {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.lumo-jobs-tray {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #0f1318;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 16px;
+  z-index: 100;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.lumo-jobs-tray__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.lumo-jobs-tray__header button {
+  background: #1f262e;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+.lumo-jobs-tray__list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lumo-jobs-tray__job {
+  display: grid;
+  grid-template-columns: 160px 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 10px;
+  background: #15191e;
+  border-radius: 4px;
+  border-left: 3px solid transparent;
+}
+
+.lumo-jobs-tray__job--running {
+  border-left-color: #f5c542;
+}
+
+.lumo-jobs-tray__job--queued {
+  border-left-color: #8a9199;
+}
+
+.lumo-jobs-tray__kind {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #8a9199;
+}
+
+.lumo-home__grid {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.lumo-project-card {
+  position: relative;
+  background: #15191e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.lumo-project-card__open {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lumo-project-card__open:hover {
+  background: rgba(27, 115, 232, 0.1);
+}
+
+.lumo-project-card__slug {
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 11px;
+  color: #8a9199;
+}
+
+.lumo-project-card__meta {
+  font-size: 11px;
+  color: #8a9199;
+  margin-top: 4px;
+}
+
+.lumo-project-card__menu {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.lumo-project-card__menu > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  user-select: none;
+}
+
+.lumo-project-card__menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.lumo-project-card__menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #1b1f25;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+  z-index: 10;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.lumo-project-card__menu-list button {
+  background: transparent;
+  text-align: left;
+  font-size: 13px;
+  padding: 6px 8px;
+}
+
+.lumo-project-card__menu-list button:hover {
+  background: rgba(27, 115, 232, 0.2);
+}
+
+.lumo-danger {
+  color: #f97171;
+}
+
+.lumo-jobs-panel {
+  padding-bottom: 20px;
+}
+
+.lumo-tabs {
+  display: inline-flex;
+  gap: 6px;
+  background: #151a20;
+  border-radius: 4px;
+  padding: 3px;
+}
+
+.lumo-tabs button {
+  background: transparent;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.lumo-tabs button.is-active {
+  background: #1b73e8;
+  color: white;
+}
+
+.lumo-jobs-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.lumo-jobs-table th,
+.lumo-jobs-table td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+}
+
+.lumo-jobs-table__details {
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 11px;
+  color: #8a9199;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lumo-jobs-table__row--failed {
+  background: rgba(249, 113, 113, 0.06);
+}
+
+.lumo-jobs-table__row--canceled {
+  opacity: 0.6;
+}
+
+.lumo-settings__section {
+  margin-top: 28px;
+}
+
+.lumo-settings__section h2 {
+  margin-bottom: 12px;
+}
+
+.lumo-settings__section .lumo-row {
+  flex-wrap: wrap;
+}
+
+.lumo-provider-status {
+  background: #151a20;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.lumo-provider-status__table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+
+.lumo-provider-status__table th,
+.lumo-provider-status__table td {
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lumo-provider-status__claude {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
