@@ -19,6 +19,26 @@ const bridge: LumoBridge = {
   credentials: {
     status: () => ipcRenderer.invoke('credentials.status'),
     recheckClaudeCode: () => ipcRenderer.invoke('credentials.recheckClaudeCode'),
+    test: (input) => ipcRenderer.invoke('credentials.test', input),
+    set: (input) => ipcRenderer.invoke('credentials.set', input),
+    clear: (input) => ipcRenderer.invoke('credentials.clear', input),
+  },
+  scripts: {
+    list: (input) => ipcRenderer.invoke('scripts.list', input),
+    generate: (input) => ipcRenderer.invoke('scripts.generate', input),
+    save: (input) => ipcRenderer.invoke('scripts.save', input),
+    restore: (input) => ipcRenderer.invoke('scripts.restore', input),
+    assist: (input) => ipcRenderer.invoke('scripts.assist', input),
+  },
+  generate: {
+    costPreview: (input) => ipcRenderer.invoke('generate.costPreview', input),
+    run: (input) => ipcRenderer.invoke('generate.run', input),
+  },
+  voices: {
+    listStock: () => ipcRenderer.invoke('voices.listStock'),
+  },
+  avatars: {
+    listStock: () => ipcRenderer.invoke('avatars.listStock'),
   },
 };
 

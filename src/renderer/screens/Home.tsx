@@ -12,7 +12,11 @@ import type { Project, ProjectSummary } from '@shared/schemas/project.js';
 // The full grid with thumbnails, quick actions, and a delete flow lands in
 // Phase 7 T118 / T119.
 
-export function Home(): JSX.Element {
+interface Props {
+  onOpenProject?: (slug: string) => void;
+}
+
+export function Home({ onOpenProject }: Props = {}): JSX.Element {
   const [projectsRoot, setProjectsRoot] = useState<string | null>(null);
   const [summaries, setSummaries] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,9 +69,19 @@ export function Home(): JSX.Element {
     setPendingAction(`Opening ${slug}…`);
     try {
       const project: Project = await unwrap(lumo.projects.open({ slug }));
-      // Phase 2 has no project-workspace screen yet — just log for now.
-      // The router in Phase 3+ dispatches to the Script studio.
-      console.info('opened project', project.slug);
+      onOpenProject?.(project.slug);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function createProjectAndOpen(): Promise<void> {
+    const name = window.prompt('Name the new project');
+    if (name === null || name.trim().length === 0) return;
+    setPendingAction('Creating project…');
+    try {
+      const project = await unwrap(lumo.projects.create({ name: name.trim() }));
+      onOpenProject?.(project.slug);
     } finally {
       setPendingAction(null);
     }
@@ -93,7 +107,7 @@ export function Home(): JSX.Element {
         </button>
         <button
           type="button"
-          onClick={() => void createProject()}
+          onClick={() => void (onOpenProject ? createProjectAndOpen() : createProject())}
           disabled={projectsRoot === null || pendingAction !== null || !claudeOk}
           aria-keyshortcuts="Control+N"
         >

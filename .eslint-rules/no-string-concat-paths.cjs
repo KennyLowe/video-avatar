@@ -66,8 +66,12 @@ module.exports = {
       },
       TemplateLiteral(node) {
         // Flag templates whose static parts contain path separators and at least one
-        // interpolated expression — `${root}/something/${name}.ts` etc.
+        // interpolated expression — `${root}/something/${name}.ts` etc. Skip
+        // templates that begin with an interpolation (first static quasi empty),
+        // which is almost always a URL composition like `${BASE_URL}/v1/foo`.
         if (node.expressions.length === 0) return;
+        const firstStatic = node.quasis[0]?.value.cooked ?? '';
+        if (firstStatic === '') return;
         const allStatic = node.quasis.map((q) => q.value.cooked).join('');
         if (/[\\/][^\\/\s]+/.test(allStatic)) {
           context.report({ node, messageId: 'concatPath' });

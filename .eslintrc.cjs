@@ -54,6 +54,10 @@ module.exports = {
       files: ['tests/**/*.ts', 'tests/**/*.tsx'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
+        // Tests mock global fetch and construct Request instances for
+        // assertions; the Non-negotiable #5 rule applies to production code
+        // under src/.
+        'lumo/no-inline-fetch': 'off',
       },
     },
   ],

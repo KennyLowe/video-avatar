@@ -1,8 +1,13 @@
 import { z } from 'zod';
 
 export const RenderKindSchema = z.enum(['avatar_clip', 'composed']);
+export type RenderKind = z.infer<typeof RenderKindSchema>;
+
 export const GenerationModeSchema = z.enum(['standard', 'avatar_iv']);
+export type GenerationMode = z.infer<typeof GenerationModeSchema>;
+
 export const RenderStatusSchema = z.enum(['pending', 'running', 'done', 'failed', 'canceled']);
+export type RenderStatus = z.infer<typeof RenderStatusSchema>;
 
 export const RenderSchema = z.object({
   id: z.number().int(),

@@ -4,6 +4,9 @@ import { toErrorShape } from '@shared/errors.js';
 import { registerProjectsIpc } from './projects.js';
 import { registerSettingsIpc } from './settings.js';
 import { registerCredentialsIpc } from './credentials.js';
+import { registerScriptsIpc } from './scripts.js';
+import { registerGenerateIpc } from './generate.js';
+import { registerStockIpc } from './stock.js';
 
 // Typed IPC bridge registry. Each handler group registers its own channels
 // here; the preload script exposes a mirror surface at window.lumo.*.
@@ -20,6 +23,9 @@ export function registerIpcHandlers(): void {
   registerProjectsIpc();
   registerSettingsIpc();
   registerCredentialsIpc();
+  registerScriptsIpc();
+  registerGenerateIpc();
+  registerStockIpc();
 }
 
 export function handle<T>(channel: string, fn: (..._args: unknown[]) => Promise<T> | T): void {

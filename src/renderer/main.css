@@ -122,3 +122,209 @@ code {
   width: 180px;
   height: 8px;
 }
+
+/* --- Phase 3 additions: Script studio, Generate, Assist menu, Cost preview */
+
+.lumo-muted {
+  color: #8a9199;
+}
+
+.lumo-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.lumo-input {
+  width: 100%;
+  background: #0f1318;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  font: inherit;
+}
+
+.lumo-grid--4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.lumo-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.lumo-picker select {
+  background: #0f1318;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 6px;
+  font: inherit;
+}
+
+.lumo-topnav {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+  background: #0f1318;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.lumo-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+}
+
+.lumo-modal__panel {
+  background: #151a20;
+  border-radius: 8px;
+  padding: 24px;
+  min-width: 420px;
+  max-width: 720px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.lumo-modal__panel--wide {
+  max-width: 1000px;
+  width: 80vw;
+}
+
+.lumo-modal__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.lumo-banner--ok {
+  background: #1a5c3a;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-top: 12px;
+}
+
+.lumo-script__prompt textarea {
+  width: 100%;
+  background: #0f1318;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  font: inherit;
+  resize: vertical;
+}
+
+.lumo-script__prompt label,
+.lumo-script__editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.lumo-script__stats {
+  color: #8a9199;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.lumo-cost-preview {
+  background: #0f1318;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.lumo-cost-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lumo-cost-table th,
+.lumo-cost-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lumo-cost__usd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lumo-cost__total {
+  font-weight: 600;
+}
+
+.lumo-cost__mtd {
+  display: flex;
+  gap: 24px;
+  font-size: 12px;
+  color: #8a9199;
+  margin-top: 10px;
+}
+
+.lumo-assist {
+  margin-top: 20px;
+  background: #0f1318;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.lumo-assist__list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lumo-assist__list button {
+  background: #1f262e;
+}
+
+.lumo-diff {
+  background: #0b0d10;
+  padding: 12px;
+  border-radius: 4px;
+  overflow: auto;
+  max-height: 50vh;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.lumo-diff__sigil {
+  display: inline-block;
+  width: 14px;
+  color: #8a9199;
+}
+
+.lumo-diff__add {
+  background: rgba(26, 92, 58, 0.2);
+  color: #9cdaa9;
+}
+
+.lumo-diff__remove {
+  background: rgba(92, 26, 26, 0.2);
+  color: #e39b9b;
+}
+
+.lumo-lint {
+  text-decoration: underline wavy #f59e0b;
+  text-underline-offset: 2px;
+}

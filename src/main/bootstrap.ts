@@ -3,6 +3,8 @@ import * as path from 'node:path';
 import { logger, setLogLevel, enforceRetention } from '@main/logging/jsonl.js';
 import { registerIpcHandlers } from '@main/ipc/index.js';
 import { reconcileOnLaunch } from '@main/workers/reconciler.js';
+import { registerHandler } from '@main/workers/jobQueue.js';
+import { runAvatarVideo } from '@main/workers/handlers/avatarVideo.js';
 import { getSettings } from '@main/platform/settings.js';
 
 // Electron main entry point. Single-window desktop app. v1 Non-negotiables:
@@ -45,6 +47,7 @@ async function bootstrap(): Promise<void> {
       electron: process.versions.electron,
     });
 
+    registerHandler('avatar_video', (ctx) => runAvatarVideo(ctx));
     registerIpcHandlers();
     await reconcileOnLaunch();
 

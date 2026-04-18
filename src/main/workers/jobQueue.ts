@@ -17,7 +17,7 @@ export interface JobContext {
   readonly signal: AbortSignal;
 }
 
-export type JobHandler = (ctx: JobContext) => Promise<void>;
+export type JobHandler = (ctx: JobContext) => Promise<unknown>;
 
 const handlers = new Map<JobKind, JobHandler>();
 const abortControllers = new Map<number, AbortController>();
@@ -26,6 +26,28 @@ let stopped = false;
 
 export function registerHandler(kind: JobKind, handler: JobHandler): void {
   handlers.set(kind, handler);
+}
+
+/**
+ * Fire-and-forget execution of a queued job. Phase 3 uses this when
+ * generate.run creates an `avatar_video` job — we kick off the handler
+ * immediately rather than waiting for the polling loop. The result is the
+ * handler's return value, wrapped in a Promise the caller may observe for
+ * tests.
+ */
+export function runNow(
+  kind: JobKind,
+  ctx: { jobId: number; projectsRoot: string; slug: string },
+): Promise<unknown> {
+  const handler = handlers.get(kind);
+  if (!handler) {
+    return Promise.reject(new Error(`No handler registered for job kind "${kind}"`));
+  }
+  const ctrl = new AbortController();
+  abortControllers.set(ctx.jobId, ctrl);
+  return handler({ ...ctx, signal: ctrl.signal }).finally(() => {
+    abortControllers.delete(ctx.jobId);
+  });
 }
 
 /** Schedule the next back-off delay for a given attempt count. */
