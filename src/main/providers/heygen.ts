@@ -202,6 +202,147 @@ export async function downloadCompletedVideo(
   return response.body;
 }
 
+// --- avatar training (Phase 5 US3) ---------------------------------------
+
+export type AvatarReadyStatus = 'training' | 'ready' | 'failed';
+
+/**
+ * Photo Avatar training. HeyGen's v2 flow is: upload the portrait as an
+ * asset (returning `image_key`), then POST /v2/photo_avatar/train with the
+ * key and a name. Returns an avatar identifier that getAvatarStatus polls.
+ *
+ * NOTE: HeyGen iterates their avatar-training endpoints more than any other
+ * part of their API; treat this as best-effort and verify response shapes
+ * against live docs at integration time.
+ */
+export async function createPhotoAvatar(args: {
+  imagePath: string;
+  name: string;
+}): Promise<{ avatarId: string }> {
+  const image = readFileSync(args.imagePath);
+  const mime = mimeTypeForImage(args.imagePath);
+  const uploaded = await request<HeyGenUploadResponse>({
+    provider: 'heygen',
+    method: 'POST',
+    url: UPLOAD_URL,
+    headers: { ...(await authedHeaders()), 'Content-Type': mime },
+    body: image,
+    timeoutMs: 120_000,
+  });
+  const imageKey = uploaded.body?.data?.id ?? uploaded.body?.id;
+  if (typeof imageKey !== 'string' || imageKey.length === 0) {
+    throw new ProviderError({
+      provider: 'heygen',
+      code: 'invalid_upload_response',
+      message: 'HeyGen image upload succeeded but did not return an asset id.',
+    });
+  }
+  const { body } = await request<{ data?: { avatar_id?: string }; avatar_id?: string }>({
+    provider: 'heygen',
+    method: 'POST',
+    url: `${BASE_URL}/v2/photo_avatar/train`,
+    headers: await authedHeaders(),
+    body: { image_key: imageKey, name: args.name },
+    timeoutMs: 60_000,
+  });
+  const avatarId = body?.data?.avatar_id ?? body?.avatar_id;
+  if (typeof avatarId !== 'string' || avatarId.length === 0) {
+    throw new ProviderError({
+      provider: 'heygen',
+      code: 'invalid_photo_avatar_response',
+      message: 'HeyGen Photo Avatar training did not return an avatar id.',
+    });
+  }
+  return { avatarId };
+}
+
+/**
+ * Instant Avatar ("Digital Twin") training. Multi-segment video upload +
+ * a train call. Exact shape of the train endpoint varies; this implementation
+ * follows the documented v2 path and will need live-docs verification on
+ * first real run.
+ */
+export async function createInstantAvatar(args: {
+  segmentPaths: readonly string[];
+  name: string;
+}): Promise<{ avatarId: string }> {
+  const uploadedKeys: string[] = [];
+  for (const segmentPath of args.segmentPaths) {
+    const bytes = readFileSync(segmentPath);
+    const { body } = await request<HeyGenUploadResponse>({
+      provider: 'heygen',
+      method: 'POST',
+      url: UPLOAD_URL,
+      headers: { ...(await authedHeaders()), 'Content-Type': 'video/mp4' },
+      body: bytes,
+      timeoutMs: 15 * 60_000,
+    });
+    const key = body?.data?.id ?? body?.id;
+    if (typeof key !== 'string' || key.length === 0) {
+      throw new ProviderError({
+        provider: 'heygen',
+        code: 'invalid_upload_response',
+        message: `HeyGen segment upload did not return an asset id (${segmentPath}).`,
+      });
+    }
+    uploadedKeys.push(key);
+  }
+  const { body } = await request<{ data?: { avatar_id?: string }; avatar_id?: string }>({
+    provider: 'heygen',
+    method: 'POST',
+    url: `${BASE_URL}/v2/video_avatar/train`,
+    headers: await authedHeaders(),
+    body: { video_keys: uploadedKeys, name: args.name },
+    timeoutMs: 60_000,
+  });
+  const avatarId = body?.data?.avatar_id ?? body?.avatar_id;
+  if (typeof avatarId !== 'string' || avatarId.length === 0) {
+    throw new ProviderError({
+      provider: 'heygen',
+      code: 'invalid_instant_avatar_response',
+      message: 'HeyGen Instant Avatar training did not return an avatar id.',
+    });
+  }
+  return { avatarId };
+}
+
+/** Poll an avatar's training status. */
+export async function getAvatarStatus(avatarId: string): Promise<AvatarReadyStatus> {
+  const { body } = await request<{
+    data?: { status?: string };
+    status?: string;
+  }>({
+    provider: 'heygen',
+    method: 'GET',
+    url: `${BASE_URL}/v2/avatar/${encodeURIComponent(avatarId)}`,
+    headers: await authedHeaders(),
+  });
+  const state = (body?.data?.status ?? body?.status ?? '').toString().toLowerCase();
+  if (state === 'ready' || state === 'completed' || state === 'succeeded') return 'ready';
+  if (state === 'failed' || state === 'error') return 'failed';
+  return 'training';
+}
+
+/** Best-effort cancel of an in-flight avatar training. */
+export async function cancelAvatarTraining(avatarId: string): Promise<void> {
+  await request({
+    provider: 'heygen',
+    method: 'DELETE',
+    url: `${BASE_URL}/v2/avatar/${encodeURIComponent(avatarId)}`,
+    headers: await authedHeaders(),
+    expect: 'empty',
+    timeoutMs: 30_000,
+  });
+}
+
+function mimeTypeForImage(filePath: string): string {
+  const lower = filePath.toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  return 'image/png';
+}
+
 export async function listStockAvatars(): Promise<StockAvatar[]> {
   const { body } = await request<HeyGenAvatarsResponse>({
     provider: 'heygen',

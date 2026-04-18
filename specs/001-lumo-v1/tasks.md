@@ -173,25 +173,25 @@ Electron single-repo layout per `plan.md`:
 
 ### Implementation for User Story 3
 
-- [ ] T083 [US3] Implement video probing at `S:/video-avatar/src/main/services/ffprobe.ts` returning duration, resolution, fps, codec, size for an imported file
-- [ ] T084 [US3] Implement segment extraction at `S:/video-avatar/src/main/services/ffmpeg.ts` using `-c copy` where stream-copy is safe and re-encoding otherwise; writes to `<project>/video/segments/<source>-<n>.mp4`
-- [ ] T085 [US3] [P] Implement frame grab at `S:/video-avatar/src/main/services/ffmpeg.ts#extractFrame` returning a PNG at a given timestamp
-- [ ] T086 [US3] [P] Build the face-detection adapter at `S:/video-avatar/src/renderer/services/faceDetect.ts` wrapping `@vladmandic/face-api` (TF.js WebGL) with lazy model load from `resources/face-api/`, returning `{ framesSampled, oneFaceCount, multiFaceCount, avgLaplacian, meanInterFrameDelta }`
-- [ ] T087 [US3] [P] Implement the quality-heuristics evaluator at `S:/video-avatar/src/renderer/services/qualityHeuristics.ts` applying the thresholds pinned in FR-027 (resolution, face coverage ≥ 90%, motion ≤ 15% area delta, Laplacian variance ≥ 120); returns a warn/reject list with clear messages
-- [ ] T088 [US3] Implement `avatars.*` IPC handlers in `S:/video-avatar/src/main/ipc/avatars.ts` (`importVideo` → probes, `importImage` → probes, `addSegment`, `trainPhoto`, `trainInstant`, `preview`) per `contracts/ipc-bridge.md`
-- [ ] T089 [US3] Extend `heygen.ts` with `createPhotoAvatar`, `createInstantAvatar`, and `getAvatarStatus` per `research.md` §1 — include the `/v2/photo_avatar/train` path and verify Instant Avatar path against live docs at implementation time
-- [ ] T090 [US3] Implement the `avatarTrain` job handler at `S:/video-avatar/src/main/workers/handlers/avatarTrain.ts` with photo + instant branches, cancellation path that hits HeyGen best-effort
-- [ ] T091 [US3] [P] Build the Avatar screen at `S:/video-avatar/src/renderer/screens/Avatar.tsx` with tier selector, accepted-type-aware importer, segment timeline, quality-heuristics panel (warn-only except multi-face on Photo Avatar which blocks), and a Train button
-- [ ] T092 [US3] [P] Build the FaceDetectPanel component at `S:/video-avatar/src/renderer/components/FaceDetectPanel.tsx` that runs detection on sampled frames/images and renders warnings inline against the FR-027 thresholds
-- [ ] T093 [US3] Implement `avatars.preview` generating a 5-second canned-phrase clip via the same avatar-video pipeline using the project's voice or a default HeyGen voice
-- [ ] T094 [US3] Wire trained avatars into the Generate screen's avatar picker alongside stock avatars
+- [X] T083 [US3] Implement video probing at `S:/video-avatar/src/main/services/ffprobe.ts` returning duration, resolution, fps, codec, size for an imported file
+- [X] T084 [US3] Implement segment extraction at `S:/video-avatar/src/main/services/ffmpeg.ts` using `-c copy` where stream-copy is safe and re-encoding otherwise; writes to `<project>/video/segments/<source>-<n>.mp4`
+- [X] T085 [US3] [P] Implement frame grab at `S:/video-avatar/src/main/services/ffmpeg.ts#extractFrame` returning a PNG at a given timestamp
+- [X] T086 [US3] [P] Build the face-detection adapter at `S:/video-avatar/src/renderer/services/faceDetect.ts` wrapping `@vladmandic/face-api` (TF.js WebGL) with lazy model load from `resources/face-api/`, returning `{ framesSampled, oneFaceCount, multiFaceCount, avgLaplacian, meanInterFrameDelta }`
+- [X] T087 [US3] [P] Implement the quality-heuristics evaluator at `S:/video-avatar/src/renderer/services/qualityHeuristics.ts` applying the thresholds pinned in FR-027 (resolution, face coverage ≥ 90%, motion ≤ 15% area delta, Laplacian variance ≥ 120); returns a warn/reject list with clear messages
+- [X] T088 [US3] Implement `avatars.*` IPC handlers in `S:/video-avatar/src/main/ipc/avatars.ts` (`importVideo` → probes, `importImage` → probes, `addSegment`, `trainPhoto`, `trainInstant`, `preview`) per `contracts/ipc-bridge.md`
+- [X] T089 [US3] Extend `heygen.ts` with `createPhotoAvatar`, `createInstantAvatar`, and `getAvatarStatus` per `research.md` §1 — include the `/v2/photo_avatar/train` path and verify Instant Avatar path against live docs at implementation time
+- [X] T090 [US3] Implement the `avatarTrain` job handler at `S:/video-avatar/src/main/workers/handlers/avatarTrain.ts` with photo + instant branches, cancellation path that hits HeyGen best-effort
+- [X] T091 [US3] [P] Build the Avatar screen at `S:/video-avatar/src/renderer/screens/Avatar.tsx` with tier selector, accepted-type-aware importer, segment timeline, quality-heuristics panel (warn-only except multi-face on Photo Avatar which blocks), and a Train button
+- [X] T092 [US3] [P] Build the FaceDetectPanel component at `S:/video-avatar/src/renderer/components/FaceDetectPanel.tsx` that runs detection on sampled frames/images and renders warnings inline against the FR-027 thresholds
+- [X] T093 [US3] Implement `avatars.preview` generating a 5-second canned-phrase clip via the same avatar-video pipeline using the project's voice or a default HeyGen voice
+- [X] T094 [US3] Wire trained avatars into the Generate screen's avatar picker alongside stock avatars
 
 ### Tests for User Story 3
 
-- [ ] T095 [P] [US3] Contract test at `S:/video-avatar/tests/contract/providers/heygen-training.test.ts` covering Photo + Instant training endpoints and status polling
-- [ ] T096 [P] [US3] Contract test for the quality-heuristics evaluator at `S:/video-avatar/tests/contract/qualityHeuristics.test.ts` covering every threshold boundary in FR-027
+- [X] T095 [P] [US3] Contract test at `S:/video-avatar/tests/contract/providers/heygen-training.test.ts` covering Photo + Instant training endpoints and status polling
+- [X] T096 [P] [US3] Contract test for the quality-heuristics evaluator at `S:/video-avatar/tests/contract/qualityHeuristics.test.ts` covering every threshold boundary in FR-027
 - [ ] T097 [P] [US3] Integration test for the avatarTrain job handler at `S:/video-avatar/tests/integration/avatarTrain.test.ts` including segment extraction and cancellation
-- [ ] T098 [US3] Playwright-Electron spec at `S:/video-avatar/tests/ui/p3-avatar-training.spec.ts` for both tier paths through to a usable avatar on Generate
+- [X] T098 [US3] Playwright-Electron spec at `S:/video-avatar/tests/ui/p3-avatar-training.spec.ts` for both tier paths through to a usable avatar on Generate
 
 **Checkpoint**: Photo Avatar and Instant Avatar both train and return usable avatar ids; Generate screen shows them; cancellation cleans up best-effort.
 

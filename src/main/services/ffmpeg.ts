@@ -163,6 +163,128 @@ export async function writeAndNormalise(
   await normaliseAudioToWav(tmpPath, outputWav);
 }
 
+/**
+ * Extract a single PNG frame from `input` at `atSeconds`. Used by the
+ * Photo Avatar "grab frame from video" tool (FR-026).
+ */
+export async function extractFrame(
+  input: string,
+  atSeconds: number,
+  outputPng: string,
+): Promise<void> {
+  await runFfmpeg({
+    args: [
+      '-y',
+      '-ss',
+      atSeconds.toFixed(3),
+      '-i',
+      input,
+      '-frames:v',
+      '1',
+      '-vf',
+      'scale=-2:1080:flags=lanczos',
+      outputPng,
+    ],
+  });
+}
+
+/**
+ * Cut a segment out of `input` starting at `inMs` and running for
+ * `(outMs - inMs)` milliseconds. Uses stream-copy (-c copy) first to avoid
+ * a re-encode; if that fails (ffmpeg exits non-zero for the typical
+ * keyframe-alignment reasons), falls back to re-encoding libx264 + aac.
+ *
+ * FR-025: "extract each segment to disk without re-encoding where possible".
+ */
+export async function extractSegment(
+  input: string,
+  inMs: number,
+  outMs: number,
+  outputMp4: string,
+): Promise<{ reencoded: boolean }> {
+  const startS = (inMs / 1000).toFixed(3);
+  const durationS = ((outMs - inMs) / 1000).toFixed(3);
+  try {
+    await runFfmpeg({
+      args: [
+        '-y',
+        '-ss',
+        startS,
+        '-i',
+        input,
+        '-t',
+        durationS,
+        '-c',
+        'copy',
+        '-avoid_negative_ts',
+        'make_zero',
+        outputMp4,
+      ],
+    });
+    return { reencoded: false };
+  } catch {
+    // Stream-copy failed (usually because the source's keyframes don't align
+    // with the requested in-point). Re-encode.
+    await runFfmpeg({
+      args: [
+        '-y',
+        '-ss',
+        startS,
+        '-i',
+        input,
+        '-t',
+        durationS,
+        '-c:v',
+        'libx264',
+        '-preset',
+        'veryfast',
+        '-crf',
+        '20',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '192k',
+        outputMp4,
+      ],
+    });
+    return { reencoded: true };
+  }
+}
+
+/**
+ * Sample N frames from `input` as PNG files in a temp directory. Used by
+ * the face-detection quality gate (FR-027).
+ */
+export async function sampleFrames(
+  input: string,
+  sampleCount: number,
+  outputDir: string,
+): Promise<string[]> {
+  if (sampleCount <= 0) return [];
+  // Use ffmpeg's `-vf fps=` filter to get exactly `sampleCount` frames
+  // distributed across the clip.
+  const duration = await probeDurationSeconds(input);
+  if (duration <= 0) return [];
+  const rate = sampleCount / duration;
+  await runFfmpeg({
+    args: [
+      '-y',
+      '-i',
+      input,
+      '-vf',
+      `fps=${rate.toFixed(4)}`,
+      '-frames:v',
+      String(sampleCount),
+      path.join(outputDir, 'frame-%03d.png'),
+    ],
+  });
+  const files: string[] = [];
+  for (let i = 1; i <= sampleCount; i += 1) {
+    files.push(path.join(outputDir, `frame-${i.toString().padStart(3, '0')}.png`));
+  }
+  return files;
+}
+
 /** Duration probe for a single media file. Uses ffmpeg's -f null output
  *  trick because we ship ffmpeg (not ffprobe) as the canonical sidecar.
  *  Returned duration is in seconds with one decimal of precision.

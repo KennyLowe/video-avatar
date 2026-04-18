@@ -51,12 +51,14 @@ export function Generate({ projectSlug }: Props): JSX.Element {
       return;
     }
     setCredNeeded(null);
-    const [scriptList, stockVoiceList, trainedVoices, avatarList] = await Promise.all([
-      unwrap(lumo.scripts.list({ slug: projectSlug })),
-      unwrap(lumo.voices.listStock()).catch(() => [] as StockVoice[]),
-      unwrap(lumo.voices.list({ slug: projectSlug })).catch(() => []),
-      unwrap(lumo.avatars.listStock()).catch(() => [] as StockAvatar[]),
-    ]);
+    const [scriptList, stockVoiceList, trainedVoices, stockAvatarList, trainedAvatars] =
+      await Promise.all([
+        unwrap(lumo.scripts.list({ slug: projectSlug })),
+        unwrap(lumo.voices.listStock()).catch(() => [] as StockVoice[]),
+        unwrap(lumo.voices.list({ slug: projectSlug })).catch(() => []),
+        unwrap(lumo.avatars.listStock()).catch(() => [] as StockAvatar[]),
+        unwrap(lumo.avatars.list({ slug: projectSlug })).catch(() => []),
+      ]);
     setScripts(scriptList);
     // Trained voices (status='ready' with a providerVoiceId) first, then
     // stock — operators always see their custom work at the top.
@@ -68,7 +70,14 @@ export function Generate({ projectSlug }: Props): JSX.Element {
         preview: null,
       }));
     setVoices([...trainedVoiceOptions, ...stockVoiceList]);
-    setAvatars(avatarList);
+    const trainedAvatarOptions: StockAvatar[] = trainedAvatars
+      .filter((a) => a.status === 'ready' && a.providerAvatarId !== null)
+      .map((a) => ({
+        avatarId: a.providerAvatarId as string,
+        name: `Trained ${a.tier === 'photo' ? 'Photo' : 'Instant'} #${a.id}`,
+        tier: a.tier,
+      }));
+    setAvatars([...trainedAvatarOptions, ...stockAvatarList]);
   }, [projectSlug]);
 
   useEffect(() => {

@@ -6,6 +6,7 @@ import { reconcileOnLaunch } from '@main/workers/reconciler.js';
 import { registerHandler } from '@main/workers/jobQueue.js';
 import { runAvatarVideo } from '@main/workers/handlers/avatarVideo.js';
 import { runVoiceTrain } from '@main/workers/handlers/voiceTrain.js';
+import { runAvatarTrain } from '@main/workers/handlers/avatarTrain.js';
 import { getSettings } from '@main/platform/settings.js';
 
 // Electron main entry point. Single-window desktop app. v1 Non-negotiables:
@@ -50,6 +51,7 @@ async function bootstrap(): Promise<void> {
 
     registerHandler('avatar_video', (ctx) => runAvatarVideo(ctx));
     registerHandler('voice_train', (ctx) => runVoiceTrain(ctx));
+    registerHandler('avatar_train', (ctx) => runAvatarTrain(ctx));
     registerIpcHandlers();
     await reconcileOnLaunch();
 

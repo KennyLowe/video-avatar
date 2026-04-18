@@ -49,6 +49,16 @@ const bridge: LumoBridge = {
   },
   avatars: {
     listStock: () => ipcRenderer.invoke('avatars.listStock'),
+    list: (input) => ipcRenderer.invoke('avatars.list', input),
+    listSegments: (input) => ipcRenderer.invoke('avatars.listSegments', input),
+    probeVideo: (input) => ipcRenderer.invoke('avatars.probeVideo', input),
+    probeImage: (input) => ipcRenderer.invoke('avatars.probeImage', input),
+    importVideo: (input) => ipcRenderer.invoke('avatars.importVideo', input),
+    importImage: (input) => ipcRenderer.invoke('avatars.importImage', input),
+    grabFrame: (input) => ipcRenderer.invoke('avatars.grabFrame', input),
+    addSegment: (input) => ipcRenderer.invoke('avatars.addSegment', input),
+    trainPhoto: (input) => ipcRenderer.invoke('avatars.trainPhoto', input),
+    trainInstant: (input) => ipcRenderer.invoke('avatars.trainInstant', input),
   },
 };
 

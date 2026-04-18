@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { Home } from './screens/Home.js';
 import { Voice } from './screens/Voice.js';
+import { Avatar } from './screens/Avatar.js';
 import { Script } from './screens/Script.js';
 import { Generate } from './screens/Generate.js';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts.js';
 
-// Routes Home ↔ Voice ↔ Script ↔ Generate. Avatar / Compose / Jobs / Settings
+// Routes Home ↔ Voice ↔ Avatar ↔ Script ↔ Generate. Compose / Jobs / Settings
 // arrive with their respective user stories.
 
-type Screen = 'home' | 'voice' | 'script' | 'generate';
+type Screen = 'home' | 'voice' | 'avatar' | 'script' | 'generate';
 
 const SCREEN_LABELS: Record<Screen, string> = {
   home: 'Home',
   voice: 'Voice',
+  avatar: 'Avatar',
   script: 'Script',
   generate: 'Generate',
 };
@@ -24,6 +26,7 @@ export function App(): JSX.Element {
   useKeyboardShortcuts([
     { combo: 'mod+0', handler: () => setScreen('home') },
     { combo: 'mod+1', handler: () => projectSlug !== null && setScreen('voice') },
+    { combo: 'mod+2', handler: () => projectSlug !== null && setScreen('avatar') },
     { combo: 'mod+3', handler: () => projectSlug !== null && setScreen('script') },
     { combo: 'mod+4', handler: () => projectSlug !== null && setScreen('generate') },
   ]);
@@ -42,6 +45,8 @@ export function App(): JSX.Element {
     switch (screen) {
       case 'voice':
         return <Voice projectSlug={projectSlug} />;
+      case 'avatar':
+        return <Avatar projectSlug={projectSlug} />;
       case 'script':
         return <Script projectSlug={projectSlug} />;
       case 'generate':
@@ -80,6 +85,9 @@ function TopNav({
       </button>
       <button type="button" onClick={() => onNavigate('voice')} aria-keyshortcuts="Control+1">
         Voice <kbd>Ctrl+1</kbd>
+      </button>
+      <button type="button" onClick={() => onNavigate('avatar')} aria-keyshortcuts="Control+2">
+        Avatar <kbd>Ctrl+2</kbd>
       </button>
       <button type="button" onClick={() => onNavigate('script')} aria-keyshortcuts="Control+3">
         Script <kbd>Ctrl+3</kbd>

@@ -8,6 +8,7 @@ import { registerScriptsIpc } from './scripts.js';
 import { registerGenerateIpc } from './generate.js';
 import { registerStockIpc } from './stock.js';
 import { registerVoicesIpc } from './voices.js';
+import { registerAvatarsIpc } from './avatars.js';
 
 // Typed IPC bridge registry. Each handler group registers its own channels
 // here; the preload script exposes a mirror surface at window.lumo.*.
@@ -28,6 +29,7 @@ export function registerIpcHandlers(): void {
   registerGenerateIpc();
   registerStockIpc();
   registerVoicesIpc();
+  registerAvatarsIpc();
 }
 
 export function handle<T>(channel: string, fn: (..._args: unknown[]) => Promise<T> | T): void {

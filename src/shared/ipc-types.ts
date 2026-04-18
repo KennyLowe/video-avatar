@@ -5,6 +5,8 @@ import type { Script, ScriptResponse } from './schemas/script.js';
 import type { GenerationMode } from './schemas/render.js';
 import type { Voice, VoiceTier } from './schemas/voice.js';
 import type { Take } from './schemas/take.js';
+import type { Avatar, AvatarTier } from './schemas/avatar.js';
+import type { Segment } from './schemas/segment.js';
 import type { Job } from './schemas/job.js';
 import type { ProviderErrorShape } from './errors.js';
 
@@ -141,8 +143,59 @@ export interface LumoBridge {
   };
   avatars: {
     listStock: () => Promise<IpcEnvelope<StockAvatar[]>>;
+    list: (input: { slug: string }) => Promise<IpcEnvelope<Avatar[]>>;
+    listSegments: (input: { slug: string }) => Promise<IpcEnvelope<Segment[]>>;
+    probeVideo: (input: { sourcePath: string }) => Promise<IpcEnvelope<VideoProbePayload>>;
+    probeImage: (input: { sourcePath: string }) => Promise<IpcEnvelope<ImageProbePayload>>;
+    importVideo: (input: {
+      slug: string;
+      sourcePath: string;
+    }) => Promise<IpcEnvelope<{ path: string; probe: VideoProbePayload }>>;
+    importImage: (input: {
+      slug: string;
+      sourcePath: string;
+    }) => Promise<IpcEnvelope<{ path: string; probe: ImageProbePayload }>>;
+    grabFrame: (input: {
+      slug: string;
+      sourcePath: string;
+      atSeconds: number;
+    }) => Promise<IpcEnvelope<{ path: string; probe: ImageProbePayload }>>;
+    addSegment: (input: {
+      slug: string;
+      sourcePath: string;
+      inMs: number;
+      outMs: number;
+    }) => Promise<IpcEnvelope<Segment>>;
+    trainPhoto: (input: {
+      slug: string;
+      imagePath: string;
+      name: string;
+    }) => Promise<IpcEnvelope<{ avatar: Avatar; job: Job }>>;
+    trainInstant: (input: {
+      slug: string;
+      segmentIds: number[];
+      name: string;
+    }) => Promise<IpcEnvelope<{ avatar: Avatar; job: Job }>>;
   };
 }
+
+export interface VideoProbePayload {
+  durationSeconds: number;
+  widthPx: number;
+  heightPx: number;
+  fps: number;
+  codec: string;
+  sizeBytes: number;
+}
+
+export interface ImageProbePayload {
+  widthPx: number;
+  heightPx: number;
+  codec: string;
+  sizeBytes: number;
+}
+
+export type { AvatarTier };
 
 export type IpcSuccess<T> = { ok: true; value: T };
 export type IpcFailure = { ok: false; error: ProviderErrorShape };
