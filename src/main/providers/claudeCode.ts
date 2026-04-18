@@ -166,7 +166,8 @@ export async function invoke<T = unknown>(
       try {
         const modelString = extractModelString(stdoutBuf);
         if (opts.outputFormat === 'json') {
-          const parsed = JSON.parse(stripMarkdownFences(modelString)) as T;
+          const candidate = extractJsonSpan(stripMarkdownFences(modelString));
+          const parsed = JSON.parse(candidate) as T;
           resolvePromise({ raw: modelString, parsed, durationMs, stderr: stderrBuf });
         } else {
           resolvePromise({
@@ -177,22 +178,32 @@ export async function invoke<T = unknown>(
           });
         }
       } catch (cause) {
-        // extractModelString itself throws ProviderError for CLI-reported
-        // errors (is_error=true); pass those through unchanged.
         if (cause instanceof ProviderError) {
           reject(cause);
           return;
         }
+        // Surface the first 400 chars of what the model actually returned
+        // so the operator can see the shape mismatch without digging into
+        // logs. Also log the full raw stdout at debug level.
+        let preview = '';
+        try {
+          preview = extractModelString(stdoutBuf).slice(0, 400);
+        } catch {
+          preview = stdoutBuf.slice(0, 400);
+        }
+        logger.warn('claudeCode.invalid_json', {
+          rawStdout: stdoutBuf.slice(0, 2000),
+        });
         reject(
           new ProviderError({
             provider: 'claudeCode',
             code: 'invalid_json',
             message:
               opts.outputFormat === 'json'
-                ? 'Claude Code returned non-JSON output under --output-format json.'
+                ? `Claude Code returned non-JSON under --output-format json. First 400 chars: ${preview}`
                 : 'Claude Code produced an unparseable response envelope.',
             nextStep:
-              'Check the system prompt; the model likely narrated instead of emitting JSON.',
+              'The model likely narrated instead of emitting JSON. Check the system prompt or retry.',
             cause,
           }),
         );
@@ -253,6 +264,47 @@ export async function verifyInstalled(): Promise<ClaudeVerifyResult> {
     });
     return { installed: true, authenticated: true, version, reason: 'probe_error_soft' };
   }
+}
+
+// Extract the first balanced `{ ... }` span from a string. Handles the
+// case where the model narrated around the JSON ("Here's the object:\n
+// {...}\nHope that helps!"). String literals with embedded braces are
+// respected so `{"x":"}"}` doesn't confuse the matcher. If no balanced
+// span is found, return the input verbatim so JSON.parse throws with a
+// clear error that includes the whole string.
+function extractJsonSpan(s: string): string {
+  const trimmed = s.trim();
+  if (trimmed.length === 0) return trimmed;
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) return trimmed;
+  const start = trimmed.indexOf('{');
+  const startArr = trimmed.indexOf('[');
+  const first =
+    start === -1 ? startArr : startArr === -1 ? start : Math.min(start, startArr);
+  if (first === -1) return trimmed;
+  const opener = trimmed[first];
+  const closer = opener === '{' ? '}' : ']';
+  let depth = 0;
+  let inStr = false;
+  let escape = false;
+  for (let i = first; i < trimmed.length; i += 1) {
+    const ch = trimmed[i];
+    if (inStr) {
+      if (escape) escape = false;
+      else if (ch === '\\') escape = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') {
+      inStr = true;
+      continue;
+    }
+    if (ch === opener) depth += 1;
+    else if (ch === closer) {
+      depth -= 1;
+      if (depth === 0) return trimmed.slice(first, i + 1);
+    }
+  }
+  return trimmed;
 }
 
 interface ClaudeCliEnvelope {
