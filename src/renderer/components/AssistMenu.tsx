@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { lumo, unwrap } from '@renderer/lib/lumo.js';
 import { DiffPreview } from './DiffPreview.js';
+import { AsyncFeedback } from './AsyncFeedback.js';
 import type { AssistAction } from '@shared/ipc-types.js';
 
 const ASSIST_ACTIONS: readonly { id: AssistAction; label: string; description: string }[] = [
@@ -57,6 +58,9 @@ export function AssistMenu({ selection, onAccept }: Props): JSX.Element {
           </li>
         ))}
       </ul>
+      {busyAction !== null ? (
+        <AsyncFeedback kind="typical" hint={`Running ${busyAction}… typically 1–5 s.`} />
+      ) : null}
       {preview !== null ? (
         <DiffPreview
           original={selection}
