@@ -1,0 +1,58 @@
+# Store everything with LF line endings in the repo. On Windows checkouts,
+# git may convert to CRLF for editor comfort (controlled by core.autocrlf),
+# but the repo itself stays LF-only — so committing from any platform is a
+# no-op for line endings and the dozens of "LF will be replaced by CRLF"
+# warnings every commit produced go away.
+
+* text=auto eol=lf
+
+# Source
+*.ts            text eol=lf
+*.tsx           text eol=lf
+*.js            text eol=lf
+*.cjs           text eol=lf
+*.mjs           text eol=lf
+*.json          text eol=lf
+*.md            text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.sql           text eol=lf
+*.css           text eol=lf
+*.html          text eol=lf
+*.svg           text eol=lf
+*.sh            text eol=lf
+.editorconfig   text eol=lf
+.gitattributes  text eol=lf
+.gitignore      text eol=lf
+.prettierrc     text eol=lf
+.prettierignore text eol=lf
+
+# Binary — never touch, never diff
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.mp3   binary
+*.mp4   binary
+*.mov   binary
+*.webm  binary
+*.wav   binary
+*.ogg   binary
+*.flac  binary
+*.m4a   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.zip   binary
+*.gz    binary
+*.tar   binary
+*.exe   binary
+*.dll   binary
+*.msi   binary
+*.pdf   binary
+*.sqlite binary
+*.db    binary
