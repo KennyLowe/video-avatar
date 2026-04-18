@@ -14,6 +14,7 @@ import {
   buildAssistPrompts,
   type AssistAction,
 } from '@main/services/assistPrompts.js';
+import { stripMarkdownFences } from '@main/services/stripFences.js';
 
 // scripts.* IPC surface per contracts/ipc-bridge.md.
 // FR-010 generate, FR-013 assist, FR-014 save/restore as immutable versions.
@@ -94,7 +95,7 @@ export function registerScriptsIpc(): void {
       prompt: userPrompt,
       outputFormat: 'text',
     });
-    return { replacement: String(result.parsed).trim() };
+    return { replacement: stripMarkdownFences(String(result.parsed)) };
   });
 }
 

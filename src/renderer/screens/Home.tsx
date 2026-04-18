@@ -53,18 +53,6 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
     }
   }
 
-  async function createProject(): Promise<void> {
-    const name = window.prompt('Name the new project');
-    if (name === null || name.trim().length === 0) return;
-    setPendingAction('Creating project…');
-    try {
-      await unwrap(lumo.projects.create({ name: name.trim() }));
-      await refresh();
-    } finally {
-      setPendingAction(null);
-    }
-  }
-
   async function openProject(slug: string): Promise<void> {
     setPendingAction(`Opening ${slug}…`);
     try {
@@ -75,13 +63,17 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
     }
   }
 
-  async function createProjectAndOpen(): Promise<void> {
+  async function createProject(): Promise<void> {
     const name = window.prompt('Name the new project');
     if (name === null || name.trim().length === 0) return;
     setPendingAction('Creating project…');
     try {
       const project = await unwrap(lumo.projects.create({ name: name.trim() }));
-      onOpenProject?.(project.slug);
+      if (onOpenProject) {
+        onOpenProject(project.slug);
+      } else {
+        await refresh();
+      }
     } finally {
       setPendingAction(null);
     }
@@ -107,7 +99,7 @@ export function Home({ onOpenProject }: Props = {}): JSX.Element {
         </button>
         <button
           type="button"
-          onClick={() => void (onOpenProject ? createProjectAndOpen() : createProject())}
+          onClick={() => void createProject()}
           disabled={projectsRoot === null || pendingAction !== null || !claudeOk}
           aria-keyshortcuts="Control+N"
         >

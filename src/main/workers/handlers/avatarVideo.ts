@@ -6,6 +6,7 @@ import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { logger } from '@main/logging/jsonl.js';
 import { notify } from '@main/platform/notifier.js';
+import { ProviderError } from '@shared/errors.js';
 import { openProjectDb } from '@main/data/db.js';
 import { JobsRepository } from '@main/data/repositories/jobs.js';
 import { CostsRepository } from '@main/data/repositories/costs.js';
@@ -38,6 +39,19 @@ export interface AvatarVideoResult {
 
 const POLL_INTERVAL_MS = 4_000;
 const POLL_TIMEOUT_MS = 30 * 60_000; // 30 min hard cap; HeyGen is usually 1–5 min.
+
+// Error codes that represent a transient condition and should be retried on
+// the poll loop rather than failing the whole job. Anything else (401, 403,
+// invalid_upload_response, etc.) is a hard failure.
+const TRANSIENT_ERROR_CODES = new Set([
+  'rate_limited',
+  'provider_unavailable',
+  'timeout',
+  'network_error',
+]);
+
+// Back-off schedule for transient errors during status polling. Caps at ~62 s.
+const POLL_RETRY_BACKOFF_MS = [2_000, 4_000, 8_000, 16_000, 32_000] as const;
 
 export async function runAvatarVideo(ctx: {
   projectsRoot: string;
@@ -158,18 +172,40 @@ export async function runAvatarVideo(ctx: {
 
 async function pollHeyGen(videoJobId: string, signal: AbortSignal): Promise<string> {
   const startedAt = Date.now();
-  // Simple wall-clock loop; the exponential back-off schedule lives in the
-  // queue-level policy for cross-restart polling (reconciler on launch).
+  let transientFailures = 0;
+  // Simple wall-clock loop; the queue's exponential back-off policy (5 s →
+  // 2 min cap) governs cross-restart polling via the reconciler. This inner
+  // loop only handles in-process retries of transient errors.
   while (!signal.aborted) {
     if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
       throw new Error(`Timed out waiting for HeyGen video ${videoJobId} after 30 minutes.`);
     }
-    const status = await heygen.getVideoStatus(videoJobId);
-    if (status.status === 'completed') return status.videoUrl;
-    if (status.status === 'failed') throw new Error(`HeyGen reported failure: ${status.error}`);
-    await sleep(POLL_INTERVAL_MS, signal);
+    try {
+      const status = await heygen.getVideoStatus(videoJobId);
+      transientFailures = 0;
+      if (status.status === 'completed') return status.videoUrl;
+      if (status.status === 'failed') throw new Error(`HeyGen reported failure: ${status.error}`);
+      await sleep(POLL_INTERVAL_MS, signal);
+    } catch (err) {
+      if (!isTransientProviderError(err) || transientFailures >= POLL_RETRY_BACKOFF_MS.length) {
+        throw err;
+      }
+      const backoffMs = POLL_RETRY_BACKOFF_MS[transientFailures] ?? POLL_INTERVAL_MS;
+      transientFailures += 1;
+      logger.warn('avatarVideo.poll transient error; retrying', {
+        videoJobId,
+        attempt: transientFailures,
+        backoffMs,
+        code: (err as ProviderError).code,
+      });
+      await sleep(backoffMs, signal);
+    }
   }
   throw new Error('Avatar video job was cancelled.');
+}
+
+function isTransientProviderError(err: unknown): boolean {
+  return err instanceof ProviderError && TRANSIENT_ERROR_CODES.has(err.code);
 }
 
 async function downloadTo(url: string, outputPath: string, signal: AbortSignal): Promise<void> {
