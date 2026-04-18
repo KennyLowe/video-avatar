@@ -205,27 +205,27 @@ Electron single-repo layout per `plan.md`:
 
 ### Implementation for User Story 4
 
-- [ ] T099 [US4] Implement the Remotion wrapper at `S:/video-avatar/src/main/providers/remotion.ts` with `bundleOnce(entryTsx)`, `invalidateBundle()`, and `renderMedia(req)` per `contracts/provider-wrappers.md`; the render settings object maps preset enum to `{ffmpegPreset, crf}` per FR-042
-- [ ] T100 [US4] Implement the template loader at `S:/video-avatar/src/main/services/templateLoader.ts` scanning `resources/templates/` and `<project>/templates/`, validating required exports, caching by absolute path
-- [ ] T101 [US4] [P] Author the `LogoIntro` template at `S:/video-avatar/resources/templates/LogoIntro.tsx` (logo + title card + colour accent)
-- [ ] T102 [US4] [P] Author the `LowerThird` template at `S:/video-avatar/resources/templates/LowerThird.tsx` (name/title overlay with in/out)
-- [ ] T103 [US4] [P] Author the `FullExplainer` template at `S:/video-avatar/resources/templates/FullExplainer.tsx` (intro + avatar clip body + outro, accepts avatar-clip path + chapters)
-- [ ] T104 [US4] [P] Author the `TitleSlide` template at `S:/video-avatar/resources/templates/TitleSlide.tsx`
-- [ ] T105 [US4] [P] Author the `ChapterCard` template at `S:/video-avatar/resources/templates/ChapterCard.tsx`
-- [ ] T106 [US4] Implement the prompt-to-props flow at `S:/video-avatar/src/main/services/templateProps.ts` — `zodToJsonSchema` + `claudeCode.invoke` + `schema.parse` + single retry on validation error per `contracts/remotion-template.md`
-- [ ] T107 [US4] Implement `compose.*` IPC handlers in `S:/video-avatar/src/main/ipc/compose.ts` (`listTemplates`, `promptProps`, `render`)
-- [ ] T108 [US4] Implement the `render` job handler at `S:/video-avatar/src/main/workers/handlers/render.ts` — calls `remotion.renderMedia` with per-job abort signal, emits progress into the async-feedback channel (T042), writes `renders` row; partial files MUST be removed on cancellation (FR-042)
-- [ ] T109 [US4] [P] Build the Compose screen at `S:/video-avatar/src/renderer/screens/Compose.tsx` — template picker (valid + invalid tabs), prompt box, `@remotion/player` live preview, side-panel props editor, render-settings form (resolution + codec + preset enum + audio bitrate), Render button
-- [ ] T110 [US4] [P] Build the RemotionPreview component at `S:/video-avatar/src/renderer/components/RemotionPreview.tsx` wrapping `@remotion/player` with scrub, play/pause, and prop hot-update
-- [ ] T111 [US4] [P] Build the JSON editor fallback component at `S:/video-avatar/src/renderer/components/PropsJsonEditor.tsx` for the second schema-parse failure path
-- [ ] T112 [US4] Add cancellation to the render job from the jobs tray, ensuring partial `.mp4` files and temp directories are removed on cancel
+- [X] T099 [US4] Implement the Remotion wrapper at `S:/video-avatar/src/main/providers/remotion.ts` with `bundleOnce(entryTsx)`, `invalidateBundle()`, and `renderMedia(req)` per `contracts/provider-wrappers.md`; the render settings object maps preset enum to `{ffmpegPreset, crf}` per FR-042
+- [X] T100 [US4] Implement the template loader at `S:/video-avatar/src/main/services/templateLoader.ts` scanning `resources/templates/` and `<project>/templates/`, validating required exports, caching by absolute path
+- [X] T101 [US4] [P] Author the `LogoIntro` template at `S:/video-avatar/resources/templates/LogoIntro.tsx` (logo + title card + colour accent)
+- [X] T102 [US4] [P] Author the `LowerThird` template at `S:/video-avatar/resources/templates/LowerThird.tsx` (name/title overlay with in/out)
+- [X] T103 [US4] [P] Author the `FullExplainer` template at `S:/video-avatar/resources/templates/FullExplainer.tsx` (intro + avatar clip body + outro, accepts avatar-clip path + chapters)
+- [X] T104 [US4] [P] Author the `TitleSlide` template at `S:/video-avatar/resources/templates/TitleSlide.tsx`
+- [X] T105 [US4] [P] Author the `ChapterCard` template at `S:/video-avatar/resources/templates/ChapterCard.tsx`
+- [X] T106 [US4] Implement the prompt-to-props flow at `S:/video-avatar/src/main/services/templateProps.ts` — `zodToJsonSchema` + `claudeCode.invoke` + `schema.parse` + single retry on validation error per `contracts/remotion-template.md`
+- [X] T107 [US4] Implement `compose.*` IPC handlers in `S:/video-avatar/src/main/ipc/compose.ts` (`listTemplates`, `promptProps`, `render`)
+- [X] T108 [US4] Implement the `render` job handler at `S:/video-avatar/src/main/workers/handlers/render.ts` — calls `remotion.renderMedia` with per-job abort signal, emits progress into the async-feedback channel (T042), writes `renders` row; partial files MUST be removed on cancellation (FR-042)
+- [X] T109 [US4] [P] Build the Compose screen at `S:/video-avatar/src/renderer/screens/Compose.tsx` — template picker (valid + invalid tabs), prompt box, `@remotion/player` live preview, side-panel props editor, render-settings form (resolution + codec + preset enum + audio bitrate), Render button
+- [X] T110 [US4] [P] Build the RemotionPreview component at `S:/video-avatar/src/renderer/components/RemotionPreview.tsx` wrapping `@remotion/player` with scrub, play/pause, and prop hot-update
+- [X] T111 [US4] [P] Build the JSON editor fallback component at `S:/video-avatar/src/renderer/components/PropsJsonEditor.tsx` for the second schema-parse failure path
+- [X] T112 [US4] Add cancellation to the render job from the jobs tray, ensuring partial `.mp4` files and temp directories are removed on cancel
 
 ### Tests for User Story 4
 
-- [ ] T113 [P] [US4] Contract test for the Remotion wrapper at `S:/video-avatar/tests/contract/providers/remotion.test.ts` (bundle + renderMedia happy path against a fixture composition; asserts preset→CRF mapping per FR-042)
-- [ ] T114 [P] [US4] Contract test for the template loader + prompt-to-props flow at `S:/video-avatar/tests/contract/remotion-template.test.ts` (validity checks, double-parse-fail path, JSON editor fallback)
+- [X] T113 [P] [US4] Contract test for the Remotion wrapper at `S:/video-avatar/tests/contract/providers/remotion.test.ts` (bundle + renderMedia happy path against a fixture composition; asserts preset→CRF mapping per FR-042)
+- [X] T114 [P] [US4] Contract test for the template loader + prompt-to-props flow at `S:/video-avatar/tests/contract/remotion-template.test.ts` (validity checks, double-parse-fail path, JSON editor fallback)
 - [ ] T115 [P] [US4] Integration test for the render job handler at `S:/video-avatar/tests/integration/render.test.ts` including cancel-then-restart and the partial-file cleanup rule
-- [ ] T116 [US4] Playwright-Electron spec at `S:/video-avatar/tests/ui/p4-compose.spec.ts` covering template pick → prompt → preview → render → playable MP4; asserts the rendered file's ffprobe reports a CRF consistent with the selected preset
+- [X] T116 [US4] Playwright-Electron spec at `S:/video-avatar/tests/ui/p4-compose.spec.ts` covering template pick → prompt → preview → render → playable MP4; asserts the rendered file's ffprobe reports a CRF consistent with the selected preset
 
 **Checkpoint**: All five seed templates load, a prompt yields validated props, live preview scrubs, rendered MP4s land in `<project>/renders/`, and the ffmpeg preset/CRF mapping from FR-042 is enforced end-to-end. Custom `.tsx` dropped into `<project>/templates/` is either loaded or explicitly invalidated with a named missing export.
 

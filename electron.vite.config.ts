@@ -40,6 +40,7 @@ export default defineConfig({
       alias: {
         '@renderer': resolve(__dirname, 'src/renderer'),
         '@shared': resolve(__dirname, 'src/shared'),
+        '@templates': resolve(__dirname, 'resources/templates'),
       },
     },
     build: {

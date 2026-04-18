@@ -22,7 +22,8 @@
       "@main/*": ["src/main/*"],
       "@preload/*": ["src/preload/*"],
       "@renderer/*": ["src/renderer/*"],
-      "@shared/*": ["src/shared/*"]
+      "@shared/*": ["src/shared/*"],
+      "@templates/*": ["resources/templates/*"]
     }
   },
   "files": [],

@@ -47,6 +47,13 @@ const bridge: LumoBridge = {
     train: (input) => ipcRenderer.invoke('voices.train', input),
     preview: (input) => ipcRenderer.invoke('voices.preview', input),
   },
+  compose: {
+    listTemplates: (input) => ipcRenderer.invoke('compose.listTemplates', input),
+    defaultProps: (input) => ipcRenderer.invoke('compose.defaultProps', input),
+    promptProps: (input) => ipcRenderer.invoke('compose.promptProps', input),
+    validateProps: (input) => ipcRenderer.invoke('compose.validateProps', input),
+    render: (input) => ipcRenderer.invoke('compose.render', input),
+  },
   avatars: {
     listStock: () => ipcRenderer.invoke('avatars.listStock'),
     list: (input) => ipcRenderer.invoke('avatars.list', input),

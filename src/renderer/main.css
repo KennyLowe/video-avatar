@@ -518,3 +518,52 @@ code {
   border-left: 3px solid #f97171;
   opacity: 0.7;
 }
+
+/* --- Phase 6 additions: Compose studio */
+
+.lumo-compose__prompt textarea {
+  width: 100%;
+  background: #0f1318;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  font: inherit;
+  resize: vertical;
+}
+
+.lumo-compose__prompt label,
+.lumo-compose__render label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.lumo-compose__preview {
+  margin-top: 20px;
+  padding: 16px;
+  background: #0b0d10;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lumo-remotion-preview {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.lumo-compose__render {
+  margin-top: 20px;
+}
+
+.lumo-compose__render .lumo-row {
+  flex-wrap: wrap;
+}
+
+.lumo-error-pre {
+  white-space: pre-wrap;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+  margin-top: 12px;
+}

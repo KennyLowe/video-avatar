@@ -70,9 +70,23 @@ module.exports = {
         // templates that begin with an interpolation (first static quasi empty),
         // which is almost always a URL composition like `${BASE_URL}/v1/foo`.
         if (node.expressions.length === 0) return;
+        // Skip templates being handed to `new RegExp(...)` — `\s` / `\b` etc.
+        // in a regex source look identical to backslashes in Windows paths.
+        if (
+          node.parent &&
+          node.parent.type === 'NewExpression' &&
+          node.parent.callee &&
+          node.parent.callee.type === 'Identifier' &&
+          node.parent.callee.name === 'RegExp'
+        ) {
+          return;
+        }
         const firstStatic = node.quasis[0]?.value.cooked ?? '';
         if (firstStatic === '') return;
         const allStatic = node.quasis.map((q) => q.value.cooked).join('');
+        // Skip templates that contain regex-shape escapes (\s, \b, \d, \w, \n,
+        // \r, \t) — they're almost never filesystem paths.
+        if (/\\[sdwbnrt]/.test(allStatic)) return;
         if (/[\\/][^\\/\s]+/.test(allStatic)) {
           context.report({ node, messageId: 'concatPath' });
         }

@@ -141,6 +141,37 @@ export interface LumoBridge {
       text: string;
     }) => Promise<IpcEnvelope<{ mp3Path: string }>>;
   };
+  compose: {
+    listTemplates: (input: { slug: string | null }) => Promise<IpcEnvelope<ComposeTemplateInfo[]>>;
+    defaultProps: (input: { templateId: string }) => Promise<IpcEnvelope<unknown>>;
+    promptProps: (input: {
+      templateId: string;
+      userPrompt: string;
+      startingProps: unknown;
+    }) => Promise<
+      IpcEnvelope<
+        | { kind: 'ok'; props: unknown }
+        | { kind: 'validation_failed'; validationError: string; lastRawResponse: string }
+      >
+    >;
+    validateProps: (input: {
+      templateId: string;
+      props: unknown;
+    }) => Promise<IpcEnvelope<{ kind: 'ok'; props: unknown } | { kind: 'error'; message: string }>>;
+    render: (input: {
+      slug: string;
+      templateId: string;
+      props: unknown;
+      settings: {
+        resolution: '1080p30' | '1080p60' | '4k30';
+        codec: 'h264' | 'h265';
+        preset: 'fast' | 'balanced' | 'quality';
+        audioBitrate: string;
+      };
+      scriptId: number | null;
+      title: string;
+    }) => Promise<IpcEnvelope<{ jobId: number }>>;
+  };
   avatars: {
     listStock: () => Promise<IpcEnvelope<StockAvatar[]>>;
     list: (input: { slug: string }) => Promise<IpcEnvelope<Avatar[]>>;
@@ -177,6 +208,18 @@ export interface LumoBridge {
       name: string;
     }) => Promise<IpcEnvelope<{ avatar: Avatar; job: Job }>>;
   };
+}
+
+export interface ComposeTemplateInfo {
+  id: string;
+  sourcePath: string;
+  displayName: string;
+  description: string;
+  isCustom: boolean;
+  validity:
+    | { kind: 'valid' }
+    | { kind: 'invalid-missing-export'; missing: string }
+    | { kind: 'invalid-custom-unsupported' };
 }
 
 export interface VideoProbePayload {

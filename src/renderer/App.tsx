@@ -4,12 +4,13 @@ import { Voice } from './screens/Voice.js';
 import { Avatar } from './screens/Avatar.js';
 import { Script } from './screens/Script.js';
 import { Generate } from './screens/Generate.js';
+import { Compose } from './screens/Compose.js';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts.js';
 
-// Routes Home ↔ Voice ↔ Avatar ↔ Script ↔ Generate. Compose / Jobs / Settings
+// Routes Home ↔ Voice ↔ Avatar ↔ Script ↔ Generate ↔ Compose. Jobs / Settings
 // arrive with their respective user stories.
 
-type Screen = 'home' | 'voice' | 'avatar' | 'script' | 'generate';
+type Screen = 'home' | 'voice' | 'avatar' | 'script' | 'generate' | 'compose';
 
 const SCREEN_LABELS: Record<Screen, string> = {
   home: 'Home',
@@ -17,6 +18,7 @@ const SCREEN_LABELS: Record<Screen, string> = {
   avatar: 'Avatar',
   script: 'Script',
   generate: 'Generate',
+  compose: 'Compose',
 };
 
 export function App(): JSX.Element {
@@ -29,6 +31,7 @@ export function App(): JSX.Element {
     { combo: 'mod+2', handler: () => projectSlug !== null && setScreen('avatar') },
     { combo: 'mod+3', handler: () => projectSlug !== null && setScreen('script') },
     { combo: 'mod+4', handler: () => projectSlug !== null && setScreen('generate') },
+    { combo: 'mod+5', handler: () => projectSlug !== null && setScreen('compose') },
   ]);
 
   function renderScreen(): JSX.Element {
@@ -51,6 +54,8 @@ export function App(): JSX.Element {
         return <Script projectSlug={projectSlug} />;
       case 'generate':
         return <Generate projectSlug={projectSlug} />;
+      case 'compose':
+        return <Compose projectSlug={projectSlug} />;
       default:
         return (
           <Home
@@ -94,6 +99,9 @@ function TopNav({
       </button>
       <button type="button" onClick={() => onNavigate('generate')} aria-keyshortcuts="Control+4">
         Generate <kbd>Ctrl+4</kbd>
+      </button>
+      <button type="button" onClick={() => onNavigate('compose')} aria-keyshortcuts="Control+5">
+        Compose <kbd>Ctrl+5</kbd>
       </button>
       <span className="lumo-muted">current: {SCREEN_LABELS[current]}</span>
     </nav>
