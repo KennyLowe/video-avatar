@@ -83,17 +83,25 @@ describe('claudeCode.invoke (JSON mode)', () => {
     const result = await promise;
     expect(result.parsed).toEqual({ ok: 1 });
     expect(result.raw).toBe('{"ok":1}');
-    expect(spawnCalls[0]).toEqual({
-      command: 'claude',
-      args: expect.arrayContaining([
+    // On Windows we route the prompt through stdin (shim + shell metachar
+    // safety); on other platforms the prompt lives on argv for prompts
+    // under the 4 KB threshold.
+    const isWin = process.platform === 'win32';
+    expect(spawnCalls[0]?.command).toBe('claude');
+    expect(spawnCalls[0]?.args).toEqual(
+      expect.arrayContaining([
         '--print',
         '--output-format',
         'json',
         '--model',
         'claude-opus-4-7',
-        'say ok',
       ]),
-    });
+    );
+    if (isWin) {
+      expect(spawnCalls[0]?.args).not.toContain('say ok');
+    } else {
+      expect(spawnCalls[0]?.args).toContain('say ok');
+    }
   });
 
   it('rejects with invalid_json when stdout is not parseable', async () => {

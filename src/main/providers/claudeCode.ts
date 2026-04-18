@@ -39,7 +39,13 @@ export async function invoke<T = unknown>(
 ): Promise<ClaudeInvokeResult<T>> {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const args = ['--print', '--output-format', opts.outputFormat, '--model', opts.model];
-  const promptForStdin = Buffer.byteLength(opts.prompt, 'utf-8') > STDIN_THRESHOLD_BYTES;
+  // On Windows we invoke claude via cmd.exe (required for the .cmd shim
+  // winget installs). Shell metacharacters in the prompt — &, |, %, ^ —
+  // would be interpreted by the shell if the prompt were on argv, so we
+  // always route it through stdin on Windows and on any prompt larger
+  // than the threshold elsewhere.
+  const promptForStdin =
+    process.platform === 'win32' || Buffer.byteLength(opts.prompt, 'utf-8') > STDIN_THRESHOLD_BYTES;
   const promptForArg = promptForStdin ? undefined : opts.prompt;
 
   if (opts.systemPrompt) {
@@ -48,9 +54,16 @@ export async function invoke<T = unknown>(
 
   const startedAt = Date.now();
   return new Promise<ClaudeInvokeResult<T>>((resolvePromise, reject) => {
+    // Claude Code on Windows is usually a .cmd shim from winget. Node's
+    // spawn without shell can only exec true .exe files, so we enable
+    // shell on win32 so the cmd interpreter resolves the shim. Args are
+    // either model/format flags we control or operator prompts that will
+    // end up on Claude Code's stdin anyway, so there's no attacker-
+    // controlled string being passed through the shell.
     const child = spawn('claude', promptForArg ? [...args, promptForArg] : args, {
       stdio: ['pipe', 'pipe', 'pipe'],
       windowsHide: true,
+      shell: process.platform === 'win32',
     });
 
     let stdoutBuf = '';
@@ -229,6 +242,19 @@ async function probeVersion(): Promise<string | null> {
     const child = spawn('claude', ['--version'], {
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
+      shell: process.platform === 'win32',
+    });
+    let stderrOut = '';
+    child.stderr.setEncoding('utf-8');
+    child.stderr.on('data', (c: string) => {
+      stderrOut += c;
+    });
+    child.on('error', (err) => {
+      logger.warn('claudeCode.probeVersion spawn_error', {
+        message: err.message,
+        code: (err as NodeJS.ErrnoException).code,
+        path: process.env['PATH']?.slice(0, 500),
+      });
     });
     let out = '';
     child.stdout.setEncoding('utf-8');
@@ -238,6 +264,10 @@ async function probeVersion(): Promise<string | null> {
     child.on('error', () => resolvePromise(null));
     child.on('close', (code) => {
       if (code !== 0) {
+        logger.warn('claudeCode.probeVersion non_zero_exit', {
+          code,
+          stderr: stderrOut.slice(0, 400),
+        });
         resolvePromise(null);
         return;
       }

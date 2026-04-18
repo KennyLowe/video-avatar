@@ -1,8 +1,8 @@
 import Database from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
-import * as path from 'node:path';
 import { projectDbPath, projectDir } from '@main/platform/paths.js';
-import { runMigrations } from './migrations/runner.js';
+import { runMigrationsInline } from './migrations/runner.js';
+import { BUNDLED_MIGRATIONS } from './migrations/registry.js';
 
 // Per-project SQLite connection pool. The cache is keyed by absolute DB path,
 // not by project id, so tests can open throwaway projects at arbitrary roots.
@@ -22,7 +22,7 @@ export function openProjectDb(params: OpenDbParams): Database.Database {
   const db = new Database(abs);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
-  runMigrations(db, path.resolve(__dirname, 'migrations'));
+  runMigrationsInline(db, BUNDLED_MIGRATIONS);
   cache.set(abs, db);
   return db;
 }
