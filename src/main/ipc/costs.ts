@@ -8,6 +8,7 @@ import { projectDir } from '@main/platform/paths.js';
 import * as elevenlabs from '@main/providers/elevenlabs.js';
 import * as heygen from '@main/providers/heygen.js';
 import { logger } from '@main/logging/jsonl.js';
+import { costsToCsv } from '@main/services/costsCsv.js';
 
 // costs.* IPC per contracts/ipc-bridge.md + FR-049 / FR-050. Combined MTD
 // returns both the local ledger totals and the provider's own reported
@@ -72,32 +73,7 @@ export function registerCostsIpc(): void {
     const filename = `costs-${new Date().toISOString().slice(0, 10)}.csv`;
     const outputPath = path.resolve(exportsDir, filename);
 
-    const headers = [
-      'timestamp',
-      'provider',
-      'operation',
-      'units',
-      'unit_kind',
-      'usd_estimate',
-      'project_id',
-      'job_id',
-    ];
-    const lines = [headers.join(',')];
-    for (const row of rows) {
-      lines.push(
-        [
-          new Date(row.recordedAt * 1000).toISOString(),
-          row.provider,
-          row.operation,
-          String(row.units),
-          row.unitKind,
-          row.usdEstimate.toFixed(4),
-          slug,
-          row.jobId === null ? '' : String(row.jobId),
-        ].join(','),
-      );
-    }
-    writeFileSync(outputPath, lines.join('\n'), 'utf-8');
+    writeFileSync(outputPath, costsToCsv(rows, slug), 'utf-8');
     return { path: outputPath, rowCount: rows.length };
   });
 }

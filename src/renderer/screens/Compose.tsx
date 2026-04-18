@@ -3,6 +3,7 @@ import { lumo, unwrap } from '@renderer/lib/lumo.js';
 import { AsyncFeedback } from '@renderer/components/AsyncFeedback.js';
 import { RemotionPreview } from '@renderer/components/RemotionPreview.js';
 import { PropsJsonEditor } from '@renderer/components/PropsJsonEditor.js';
+import { useKeyboardShortcuts } from '@renderer/hooks/useKeyboardShortcuts.js';
 import { REGISTERED_TEMPLATES, findTemplate } from '@renderer/templates/registry.js';
 
 // Composition studio per FR-036..FR-042. Pick a template, describe the
@@ -96,6 +97,15 @@ export function Compose({ projectSlug }: Props): JSX.Element {
       setBusy(null);
     }
   }
+
+  useKeyboardShortcuts([
+    {
+      combo: 'mod+enter',
+      handler: () => {
+        if (template !== null && busy === null) void render();
+      },
+    },
+  ]);
 
   if (template === null) {
     return (
@@ -213,8 +223,13 @@ export function Compose({ projectSlug }: Props): JSX.Element {
               className="lumo-input"
             />
           </label>
-          <button type="button" onClick={() => void render()} disabled={busy !== null}>
-            Render
+          <button
+            type="button"
+            onClick={() => void render()}
+            disabled={busy !== null}
+            aria-keyshortcuts="Control+Enter"
+          >
+            Render <kbd>Ctrl+Enter</kbd>
           </button>
         </div>
         {jobId !== null ? (

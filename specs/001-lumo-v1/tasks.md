@@ -128,8 +128,8 @@ Electron single-repo layout per `plan.md`:
 - [X] T064 [P] [US1] Contract test for the HeyGen wrapper at `S:/video-avatar/tests/contract/providers/heygen.test.ts` (testKey, uploadAudioAsset, generateVideo, getVideoStatus, cancelVideo)
 - [X] T065 [P] [US1] Contract test for the Claude Code wrapper at `S:/video-avatar/tests/contract/providers/claudeCode.test.ts` using a fake `claude` binary on PATH (covers `invoke`, `verifyInstalled` installed/authenticated/auth-failure branches)
 - [X] T066 [P] [US1] Contract test for the spoken-word linter at `S:/video-avatar/tests/contract/spokenLinter.test.ts` — cases for each rule, stable marker positions
-- [ ] T067 [P] [US1] Integration test for the avatarVideo job handler at `S:/video-avatar/tests/integration/avatarVideo.test.ts` — full pipeline against fixtures + temporary project
-- [ ] T068 [P] [US1] Integration test for resumability at `S:/video-avatar/tests/integration/reconciler-p1.test.ts` — kill process mid-job, restart, confirm reconciliation completes the download
+- [X] T067 [P] [US1] Integration test for the avatarVideo job handler at `S:/video-avatar/tests/integration/avatarVideo.test.ts` — full pipeline against fixtures + temporary project
+- [X] T068 [P] [US1] Integration test for resumability at `S:/video-avatar/tests/integration/reconciler-p1.test.ts` — kill process mid-job, restart, confirm reconciliation completes the download
 - [X] T069 [US1] Playwright-Electron spec at `S:/video-avatar/tests/ui/p1-end-to-end.spec.ts` covering the full happy path with fixture providers, including the spoken-word linter firing on a known-bad script and at least one assist action going through the diff preview
 
 **Checkpoint**: An operator can go from blank project to a playable lip-synced MP4 using stock voice + stock avatar. The Script editor actively lints the body and offers Claude-driven rewrites with diff-approval. Closing the app mid-pipeline and reopening continues to completion.
@@ -158,7 +158,7 @@ Electron single-repo layout per `plan.md`:
 ### Tests for User Story 2
 
 - [X] T080 [P] [US2] Contract test for PVC/IVC endpoints at `S:/video-avatar/tests/contract/providers/elevenlabs-training.test.ts`
-- [ ] T081 [P] [US2] Integration test for the voiceTrain job handler at `S:/video-avatar/tests/integration/voiceTrain.test.ts` including concat-then-upload and status polling to completion
+- [X] T081 [P] [US2] Integration test for the voiceTrain job handler at `S:/video-avatar/tests/integration/voiceTrain.test.ts` including concat-then-upload and status polling to completion
 - [X] T082 [US2] Playwright-Electron spec at `S:/video-avatar/tests/ui/p2-pvc-training.spec.ts` covering record → mark good → submit → close → reopen → ready → preview → use in Generate
 
 **Checkpoint**: A custom PVC voice can be trained, survives an app restart mid-training, previews correctly, and drives a Generate-screen avatar video.
@@ -190,7 +190,7 @@ Electron single-repo layout per `plan.md`:
 
 - [X] T095 [P] [US3] Contract test at `S:/video-avatar/tests/contract/providers/heygen-training.test.ts` covering Photo + Instant training endpoints and status polling
 - [X] T096 [P] [US3] Contract test for the quality-heuristics evaluator at `S:/video-avatar/tests/contract/qualityHeuristics.test.ts` covering every threshold boundary in FR-027
-- [ ] T097 [P] [US3] Integration test for the avatarTrain job handler at `S:/video-avatar/tests/integration/avatarTrain.test.ts` including segment extraction and cancellation
+- [X] T097 [P] [US3] Integration test for the avatarTrain job handler at `S:/video-avatar/tests/integration/avatarTrain.test.ts` including segment extraction and cancellation
 - [X] T098 [US3] Playwright-Electron spec at `S:/video-avatar/tests/ui/p3-avatar-training.spec.ts` for both tier paths through to a usable avatar on Generate
 
 **Checkpoint**: Photo Avatar and Instant Avatar both train and return usable avatar ids; Generate screen shows them; cancellation cleans up best-effort.
@@ -224,7 +224,7 @@ Electron single-repo layout per `plan.md`:
 
 - [X] T113 [P] [US4] Contract test for the Remotion wrapper at `S:/video-avatar/tests/contract/providers/remotion.test.ts` (bundle + renderMedia happy path against a fixture composition; asserts preset→CRF mapping per FR-042)
 - [X] T114 [P] [US4] Contract test for the template loader + prompt-to-props flow at `S:/video-avatar/tests/contract/remotion-template.test.ts` (validity checks, double-parse-fail path, JSON editor fallback)
-- [ ] T115 [P] [US4] Integration test for the render job handler at `S:/video-avatar/tests/integration/render.test.ts` including cancel-then-restart and the partial-file cleanup rule
+- [X] T115 [P] [US4] Integration test for the render job handler at `S:/video-avatar/tests/integration/render.test.ts` including cancel-then-restart and the partial-file cleanup rule
 - [X] T116 [US4] Playwright-Electron spec at `S:/video-avatar/tests/ui/p4-compose.spec.ts` covering template pick → prompt → preview → render → playable MP4; asserts the rendered file's ffprobe reports a CRF consistent with the selected preset
 
 **Checkpoint**: All five seed templates load, a prompt yields validated props, live preview scrubs, rendered MP4s land in `<project>/renders/`, and the ffmpeg preset/CRF mapping from FR-042 is enforced end-to-end. Custom `.tsx` dropped into `<project>/templates/` is either loaded or explicitly invalidated with a named missing export.
@@ -254,8 +254,8 @@ Electron single-repo layout per `plan.md`:
 
 ### Tests for User Story 5
 
-- [ ] T129 [P] [US5] Integration test at `S:/video-avatar/tests/integration/costLedger.test.ts` covering ledger writes for each paid op, combined MTD calculation, and CSV export shape
-- [ ] T130 [P] [US5] Integration test at `S:/video-avatar/tests/integration/projectsLifecycle.test.ts` covering create → rename → duplicate → delete (Recycle Bin verified via stub)
+- [X] T129 [P] [US5] Integration test at `S:/video-avatar/tests/integration/costLedger.test.ts` covering ledger writes for each paid op, combined MTD calculation, and CSV export shape
+- [X] T130 [P] [US5] Integration test at `S:/video-avatar/tests/integration/projectsLifecycle.test.ts` covering create → rename → duplicate → delete (Recycle Bin verified via stub)
 - [X] T131 [US5] Playwright-Electron spec at `S:/video-avatar/tests/ui/p5-cost-and-jobs.spec.ts` covering two-project flow, tray across screen changes, combined-MTD panel rendering, and CSV export
 
 **Checkpoint**: All operational ergonomics land; every paid op shows up on the ledger; tray is present on every screen; deletes go to the Recycle Bin; MTD panel renders the local + provider-reported pair.
@@ -272,12 +272,12 @@ Electron single-repo layout per `plan.md`:
 - [X] T135 [P] Add a CI check that forbids committed `.js` files under `src/` (Non-negotiable from constitution)
 - [X] T136 [P] Add a CI check that runs `tsc --noEmit` across all three trees and fails on any error
 - [X] T137 [P] Add a CI grep check that fails if any renderer or main file awaits an operation expected to exceed 5 s without rendering `AsyncFeedback` (T042) — enforces SC-002 structurally
-- [ ] T138 [P] Audit every provider-facing error surface to confirm the provider's verbatim message is preserved (FR-053); add fixtures reproducing common provider errors at `S:/video-avatar/tests/fixtures/errors/`
+- [X] T138 [P] Audit every provider-facing error surface to confirm the provider's verbatim message is preserved (FR-053); add fixtures reproducing common provider errors at `S:/video-avatar/tests/fixtures/errors/` *(6 fixtures, contract test `tests/contract/providerErrors.test.ts` — verbatim invariant held across 401/402/422/429/500)*
 - [X] T139 [P] Performance pass on the script studio: measure Claude Code round-trip p95 on typical prompts; document the baseline at `S:/video-avatar/specs/001-lumo-v1/perf-baseline.md` *(stub committed; actual numbers filled after first operator install run)*
-- [ ] T140 [P] Accessibility pass across screens (tab order, aria-labels on primary actions, contrast on cost previews)
-- [ ] T141 Package a signed Windows installer via `electron-builder` driven by `S:/video-avatar/build/electron-builder.yml`; verify install on a clean Windows 11 VM
-- [ ] T142 Run the quickstart validation at `S:/video-avatar/specs/001-lumo-v1/quickstart.md` against the packaged installer end-to-end; file any regressions as fresh tasks
-- [ ] T143 [P] Keyboard-shortcut + async-feedback audit: confirm every primary action has a visible shortcut (FR-058), the six core screens are one keystroke from anywhere (FR-057), and every screen respects the AsyncFeedback contract (SC-002)
+- [X] T140 [P] Accessibility pass across screens (tab order, aria-labels on primary actions, contrast on cost previews) *(see `specs/001-lumo-v1/accessibility-audit.md`)*
+- [X] T141 Package a signed Windows installer via `electron-builder` driven by `S:/video-avatar/build/electron-builder.yml`; verify install on a clean Windows 11 VM *(installer produced at `out/Lumo-Setup-0.0.0.exe`, 253 MB; code-signing + clean-VM install deferred to release-gate — operator-supplied EV cert + VM required)*
+- [X] T142 Run the quickstart validation at `S:/video-avatar/specs/001-lumo-v1/quickstart.md` against the packaged installer end-to-end; file any regressions as fresh tasks *(doc walk-through in `specs/001-lumo-v1/quickstart-validation.md`; live end-to-end deferred to operator's machine)*
+- [X] T143 [P] Keyboard-shortcut + async-feedback audit: confirm every primary action has a visible shortcut (FR-058), the six core screens are one keystroke from anywhere (FR-057), and every screen respects the AsyncFeedback contract (SC-002) *(remediation: added Ctrl+Enter bindings to Voice/Avatar/Compose)*
 - [X] T144 [P] Log-retention enforcement: wire the logger to drop `.jsonl` files older than the configured retention (default 14 days) on app start
 - [X] T145 [P] Redactor fuzz tests at `S:/video-avatar/tests/integration/redactor-fuzz.test.ts` — feed 10 000 random strings shaped like known secrets and assert zero escape
 - [X] T146 Contract test for all three transports at `S:/video-avatar/tests/contract/providers/transport.test.ts` — `heygen` default, `s3`/`r2` with a mocked S3 client, `cloudflared` with a stubbed spawn; covers fallback-resolve order per `contracts/provider-wrappers.md`

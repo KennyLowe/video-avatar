@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { lumo, unwrap } from '@renderer/lib/lumo.js';
 import { AsyncFeedback } from '@renderer/components/AsyncFeedback.js';
 import { FaceDetectPanel } from '@renderer/components/FaceDetectPanel.js';
+import { useKeyboardShortcuts } from '@renderer/hooks/useKeyboardShortcuts.js';
 import {
   evaluateImage,
   evaluateVideo,
@@ -207,6 +208,20 @@ export function Avatar({ projectSlug }: Props): JSX.Element {
     }
   }
 
+  useKeyboardShortcuts([
+    {
+      combo: 'mod+enter',
+      handler: () => {
+        if (busy !== null) return;
+        if (tier === 'photo' && imageImport !== null && !hasRejection(findings)) {
+          void trainPhoto();
+        } else if (tier === 'instant' && segments.length > 0) {
+          void trainInstant();
+        }
+      },
+    },
+  ]);
+
   return (
     <main className="lumo-avatar">
       <header>
@@ -240,8 +255,9 @@ export function Avatar({ projectSlug }: Props): JSX.Element {
                 type="button"
                 onClick={() => void trainPhoto()}
                 disabled={busy !== null || hasRejection(findings)}
+                aria-keyshortcuts="Control+Enter"
               >
-                Train Photo Avatar
+                Train Photo Avatar <kbd>Ctrl+Enter</kbd>
               </button>
             </>
           ) : null}
@@ -302,8 +318,9 @@ export function Avatar({ projectSlug }: Props): JSX.Element {
                 type="button"
                 onClick={() => void trainInstant()}
                 disabled={busy !== null || segments.length === 0}
+                aria-keyshortcuts="Control+Enter"
               >
-                Train Instant Avatar
+                Train Instant Avatar <kbd>Ctrl+Enter</kbd>
               </button>
             </>
           ) : null}

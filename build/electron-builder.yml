@@ -30,7 +30,9 @@ win:
       arch:
         - x64
   artifactName: Lumo-Setup-${version}.${ext}
-  icon: build/icons/icon.ico
+  # electron-builder will convert the PNG to ICO at package time. Swap in a
+  # hand-authored brand mark before the first public release.
+  icon: build/icons/icon.png
 nsis:
   oneClick: false
   allowElevation: true

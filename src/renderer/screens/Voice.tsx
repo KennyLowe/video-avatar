@@ -8,6 +8,7 @@ import {
 } from '@renderer/services/audioRecorder.js';
 import { WaveformMeter } from '@renderer/components/WaveformMeter.js';
 import { AsyncFeedback } from '@renderer/components/AsyncFeedback.js';
+import { useKeyboardShortcuts } from '@renderer/hooks/useKeyboardShortcuts.js';
 import type { Take } from '@shared/schemas/take.js';
 import type { Voice, VoiceTier } from '@shared/schemas/voice.js';
 
@@ -193,6 +194,15 @@ export function Voice({ projectSlug }: Props): JSX.Element {
   const seconds = Math.floor(goodSeconds % 60);
   const pvcBlocked = minimums !== null && goodSeconds < minimums.pvcSeconds;
   const ivcBlocked = minimums !== null && goodSeconds < minimums.ivcSeconds;
+
+  useKeyboardShortcuts([
+    {
+      combo: 'mod+enter',
+      handler: () => {
+        if (!pvcBlocked && busy === null) void train('pvc');
+      },
+    },
+  ]);
   const pvcGap = useMemo(() => {
     if (!minimums) return '';
     const gap = Math.max(0, minimums.pvcSeconds - goodSeconds);
@@ -302,8 +312,9 @@ export function Voice({ projectSlug }: Props): JSX.Element {
             type="button"
             onClick={() => void train('pvc')}
             disabled={pvcBlocked || busy !== null}
+            aria-keyshortcuts="Control+Enter"
           >
-            Train Professional Voice Clone (PVC){pvcGap}
+            Train Professional Voice Clone (PVC){pvcGap} <kbd>Ctrl+Enter</kbd>
           </button>
           <button
             type="button"
