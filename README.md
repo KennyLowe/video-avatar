@@ -29,8 +29,8 @@ disk in plaintext and never appear in logs.
 ## Getting the code
 
 ```powershell
-git clone https://github.com/<your-org>/lumo.git
-cd lumo
+git clone https://github.com/KennyLowe/video-avatar.git
+cd video-avatar
 npm install
 ```
 
@@ -39,7 +39,7 @@ Electron's Node ABI automatically by the `postinstall` hook.
 
 If you're on a mapped network drive or UNC path, the install works but
 running the app does not — Chromium's sandbox fails to initialise on
-non-local paths. Clone to a local drive (`C:\lumo` or similar).
+non-local paths. Clone to a local drive (e.g. `C:\video-avatar`).
 
 ## Running
 
