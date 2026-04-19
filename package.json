@@ -3,10 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "Single-operator Windows desktop app that turns a prompt into a lip-synced branded avatar video.",
-  "author": {
-    "name": "Kenny Lowe",
-    "email": "kenny.lowe@gmail.com"
-  },
+  "author": "Lumo Contributors",
   "license": "UNLICENSED",
   "main": "dist/main/bootstrap.js",
   "engines": {

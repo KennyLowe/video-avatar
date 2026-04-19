@@ -176,7 +176,7 @@ Top-level screens, reachable by keyboard shortcut:
 - **Custom templates:** Operator can drop their own `.tsx` files into `<project>/templates/`. Templates that fail to expose `schema` + `defaultProps` + `Composition` + `durationInFrames` + `fps` are reported as invalid with the specific missing export and are not loadable.
 - **Prompt-to-props flow:**
   1. Operator picks a template.
-  2. Operator writes a natural-language prompt: e.g. "Dell blue (#0076CE), title 'Azure Local rack awareness', subtitle 'Kenny Lowe — Dell TME', logo from project."
+  2. Operator writes a natural-language prompt: e.g. "Brand blue (#0076CE), title 'Quick product overview', subtitle 'Speaker Name — Role', logo from project."
   3. Lumo sends to Claude Code: the prompt, the template's Zod schema converted to JSON Schema via `zod-to-json-schema`, the `defaultProps` as a starting point, and a system prompt instructing JSON-only output.
   4. Response is validated with `schema.parse()`. Parse failures retry once with the validation error appended to the prompt; a second failure surfaces the error and lets the operator edit the props manually in a JSON editor.
 - **Preview:** Embed `@remotion/player` for interactive preview. Scrubbing, play/pause, props editing in a side panel.

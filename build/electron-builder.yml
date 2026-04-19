@@ -1,6 +1,6 @@
-appId: com.kennylowe.lumo
+appId: app.lumo.desktop
 productName: Lumo
-copyright: Copyright © 2026 Kenny Lowe
+copyright: Copyright © 2026 Lumo Contributors
 asar: true
 asarUnpack:
   - resources/**

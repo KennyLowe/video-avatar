@@ -151,7 +151,7 @@ export function Compose({ projectSlug }: Props): JSX.Element {
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
             rows={3}
-            placeholder='e.g. "Dell blue (#0076CE), title \"Azure Local rack awareness\", subtitle \"Kenny Lowe — Dell TME\"."'
+            placeholder='e.g. "Brand blue (#0076CE), title \"Quick product overview\", subtitle \"Speaker Name — Role\"."'
           />
         </label>
         <div className="lumo-row">

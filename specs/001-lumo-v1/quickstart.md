@@ -44,7 +44,7 @@ You have a lip-synced MP4 of a stock avatar reading an AI-generated script. Tota
 
 1. **Compose** (`Ctrl+5`). Pick the `FullExplainer` template.
 2. Prompt in natural language, e.g.:
-   > "Dell blue #0076CE, title 'What Lumo does', subtitle 'Kenny Lowe', body is the avatar clip I just made."
+   > "Brand blue #0076CE, title 'What Lumo does', subtitle 'Speaker Name', body is the avatar clip I just made."
 3. Lumo sends the prompt + the template's schema + the starting props to Claude Code. The returned JSON is validated; on failure a JSON editor opens with the error.
 4. Preview scrubs in the inline `@remotion/player`. Adjust props live.
 5. Click Render. Render settings default to 1080p30 / h264 / balanced. The output MP4 lands in `<project>/renders/`.

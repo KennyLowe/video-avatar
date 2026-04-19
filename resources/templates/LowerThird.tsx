@@ -22,8 +22,8 @@ export const schema = z.object({
 export type LowerThirdProps = z.infer<typeof schema>;
 
 export const defaultProps: LowerThirdProps = {
-  name: 'Kenny Lowe',
-  title: 'Technical marketing engineer',
+  name: 'Speaker Name',
+  title: 'Speaker Role',
   brandColor: '#1b73e8',
   accentColor: '#ffffff',
 };
