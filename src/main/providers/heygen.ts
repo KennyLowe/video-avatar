@@ -197,8 +197,28 @@ export async function getVideoStatus(videoJobId: string): Promise<VideoStatus> {
       error: (data?.error as string | undefined) ?? 'HeyGen reported a failed render.',
     };
   }
-  if (statusRaw === 'pending' || statusRaw === 'processing' || statusRaw === 'queued') {
-    return { status: statusRaw === 'queued' ? 'pending' : (statusRaw as 'pending' | 'processing') };
+  // Treat every documented non-terminal state as one of our two internal
+  // pending buckets. HeyGen has expanded this list over time — observed
+  // values include pending, processing, queued, waiting, in_queue, and
+  // draft. Mapping all "not yet running" states to `pending` and all
+  // "running" states to `processing` keeps pollUntilTerminal happy; we
+  // only need to distinguish the two well enough for UI progress copy.
+  if (
+    statusRaw === 'processing' ||
+    statusRaw === 'rendering' ||
+    statusRaw === 'generating'
+  ) {
+    return { status: 'processing' };
+  }
+  if (
+    statusRaw === 'pending' ||
+    statusRaw === 'queued' ||
+    statusRaw === 'waiting' ||
+    statusRaw === 'in_queue' ||
+    statusRaw === 'draft' ||
+    statusRaw === 'submitted'
+  ) {
+    return { status: 'pending' };
   }
   return { status: 'failed', error: `Unknown HeyGen status "${statusRaw}".` };
 }

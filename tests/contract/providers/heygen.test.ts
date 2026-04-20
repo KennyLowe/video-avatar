@@ -249,6 +249,31 @@ describe('heygen.getVideoStatus', () => {
     mockFetch([jsonResponse(200, { data: { status: 'queued' } })]);
     expect(await heygen.getVideoStatus('vid-3')).toEqual({ status: 'pending' });
   });
+
+  // HeyGen has expanded the non-terminal status set over time. These have
+  // all been observed live or in the docs; pin them so a future provider
+  // tweak doesn't silently crash a real render.
+  const pendingAliases = ['pending', 'queued', 'waiting', 'in_queue', 'draft', 'submitted'];
+  for (const raw of pendingAliases) {
+    it(`treats "${raw}" as pending`, async () => {
+      mockFetch([jsonResponse(200, { data: { status: raw } })]);
+      expect(await heygen.getVideoStatus('vid-p')).toEqual({ status: 'pending' });
+    });
+  }
+  const processingAliases = ['processing', 'rendering', 'generating'];
+  for (const raw of processingAliases) {
+    it(`treats "${raw}" as processing`, async () => {
+      mockFetch([jsonResponse(200, { data: { status: raw } })]);
+      expect(await heygen.getVideoStatus('vid-r')).toEqual({ status: 'processing' });
+    });
+  }
+
+  it('surfaces genuinely unknown statuses as failures', async () => {
+    mockFetch([jsonResponse(200, { data: { status: 'exploded' } })]);
+    const res = await heygen.getVideoStatus('vid-x');
+    expect(res).toMatchObject({ status: 'failed' });
+    expect((res as { error: string }).error).toContain('"exploded"');
+  });
 });
 
 describe('heygen.listStockAvatars', () => {
