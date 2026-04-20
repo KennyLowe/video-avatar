@@ -17,10 +17,18 @@ export interface TestKeyResult {
   mtdCredits: number | null;
 }
 
+// HeyGen distinguishes pre-built avatars ("avatar") from user-trained
+// photo avatars ("talking_photo") at the API layer — different list
+// fields in /v2/avatars and different character-type strings on the
+// generate payload. We carry that through so the right field goes onto
+// the wire when the operator picks one.
+export type HeyGenAvatarKind = 'avatar' | 'talking_photo';
+
 export interface StockAvatar {
   avatarId: string;
   name: string;
   tier: 'photo' | 'instant';
+  kind: HeyGenAvatarKind;
 }
 
 export interface GenerateVideoArgs {
@@ -32,6 +40,9 @@ export interface GenerateVideoArgs {
    *  or contains disallowed characters; the provider wrapper sanitises to
    *  a safe subset before sending. */
   title?: string;
+  /** How HeyGen classifies the avatar. Defaults to 'avatar' for backward
+   *  compatibility with callers that haven't yet plumbed the kind through. */
+  avatarKind?: HeyGenAvatarKind;
 }
 
 export interface VideoStatusPending {
@@ -111,6 +122,16 @@ export async function generateVideo(args: GenerateVideoArgs): Promise<{ videoJob
   // HeyGen expects the title under `video_title` on both /v2/video/generate
   // and /v2/video/av4/generate (observed live — the API rejects a request
   // without it with "video_title is invalid: Field required").
+  //
+  // `character` shape depends on whether the avatar is a pre-built avatar
+  // or a user-trained talking_photo (Photo Avatar). Sending the wrong
+  // shape yields "Provided talking photo image <id> not found".
+  const kind = args.avatarKind ?? 'avatar';
+  const character =
+    kind === 'talking_photo'
+      ? { type: 'talking_photo', talking_photo_id: args.avatarId }
+      : { type: 'avatar', avatar_id: args.avatarId };
+
   const payload =
     args.mode === 'avatar_iv'
       ? {
@@ -122,7 +143,7 @@ export async function generateVideo(args: GenerateVideoArgs): Promise<{ videoJob
       : {
           video_inputs: [
             {
-              character: { type: 'avatar', avatar_id: args.avatarId },
+              character,
               voice: { type: 'audio', audio_asset_id: args.audioAssetId },
             },
           ],
@@ -379,11 +400,25 @@ export async function listStockAvatars(): Promise<StockAvatar[]> {
     headers: await authedHeaders(),
   });
   const avatars = body?.data?.avatars ?? body?.avatars ?? [];
-  return avatars.map((a) => ({
+  const talkingPhotos = body?.data?.talking_photos ?? body?.talking_photos ?? [];
+  const avatarOptions: StockAvatar[] = avatars.map((a) => ({
     avatarId: a.avatar_id,
     name: a.avatar_name ?? a.name ?? 'Unnamed avatar',
     tier: 'photo' as const,
+    kind: 'avatar' as const,
   }));
+  // User-trained Photo Avatars come back under `talking_photos`. Prefix
+  // the name so the operator can pick their own trained avatar out of a
+  // list that may run to hundreds of stock entries.
+  const talkingPhotoOptions: StockAvatar[] = talkingPhotos.map((t) => ({
+    avatarId: t.talking_photo_id,
+    name: `${t.talking_photo_name ?? 'Talking photo'} (trained)`,
+    tier: 'photo' as const,
+    kind: 'talking_photo' as const,
+  }));
+  // Trained entries first so the operator always sees their own work at
+  // the top of the dropdown.
+  return [...talkingPhotoOptions, ...avatarOptions];
 }
 
 // --- response shapes (provider-side, loosely typed) ---
@@ -422,6 +457,8 @@ interface HeyGenStatusResponse extends HeyGenEnvelope<{
 
 interface HeyGenAvatarsResponse extends HeyGenEnvelope<{
   avatars?: Array<{ avatar_id: string; avatar_name?: string; name?: string }>;
+  talking_photos?: Array<{ talking_photo_id: string; talking_photo_name?: string }>;
 }> {
   avatars?: Array<{ avatar_id: string; avatar_name?: string; name?: string }>;
+  talking_photos?: Array<{ talking_photo_id: string; talking_photo_name?: string }>;
 }

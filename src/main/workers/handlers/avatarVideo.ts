@@ -29,6 +29,7 @@ export interface AvatarVideoInput {
   voiceRowId: number | null;
   avatarId: string;
   avatarRowId: number | null;
+  avatarKind?: 'avatar' | 'talking_photo';
   mode: GenerationMode;
 }
 
@@ -101,6 +102,7 @@ export async function runAvatarVideo(ctx: {
       audioAssetId,
       mode: input.mode,
       title: script.title,
+      avatarKind: input.avatarKind ?? 'avatar',
     });
     jobs.updateStatus(ctx.jobId, { providerJobId: videoJobId });
 
@@ -189,6 +191,7 @@ interface StoredInput {
   voiceRowId: number | null;
   avatarId: string;
   avatarRowId: number | null;
+  avatarKind?: 'avatar' | 'talking_photo';
   mode: GenerationMode;
 }
 

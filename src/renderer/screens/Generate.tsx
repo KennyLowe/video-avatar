@@ -76,6 +76,9 @@ export function Generate({ projectSlug }: Props): JSX.Element {
         avatarId: a.providerAvatarId as string,
         name: `Trained ${a.tier === 'photo' ? 'Photo' : 'Instant'} #${a.id}`,
         tier: a.tier,
+        // Photo Avatars trained through Lumo are talking_photos on
+        // HeyGen's side; Instant Avatars are regular avatars.
+        kind: a.tier === 'photo' ? 'talking_photo' : 'avatar',
       }));
     setAvatars([...trainedAvatarOptions, ...stockAvatarList]);
   }, [projectSlug]);
@@ -98,6 +101,8 @@ export function Generate({ projectSlug }: Props): JSX.Element {
 
   async function run(): Promise<void> {
     if (scriptId === null || voiceId === null || avatarId === null) return;
+    const picked = avatars.find((a) => a.avatarId === avatarId);
+    const avatarKind = picked?.kind ?? 'avatar';
     setRunning(true);
     setError(null);
     try {
@@ -109,6 +114,7 @@ export function Generate({ projectSlug }: Props): JSX.Element {
           voiceRowId: null,
           avatarId,
           avatarRowId: null,
+          avatarKind,
           mode,
         }),
       );

@@ -31,6 +31,8 @@ export interface StockAvatar {
   avatarId: string;
   name: string;
   tier: 'photo' | 'instant';
+  /** HeyGen taxonomy: 'avatar' = pre-built, 'talking_photo' = user-trained. */
+  kind: 'avatar' | 'talking_photo';
 }
 
 export type ScriptTone = 'conversational' | 'technical' | 'formal';
@@ -135,6 +137,7 @@ export interface LumoBridge {
       voiceRowId: number | null;
       avatarId: string;
       avatarRowId: number | null;
+      avatarKind: 'avatar' | 'talking_photo';
       mode: GenerationMode;
     }) => Promise<IpcEnvelope<{ jobId: number }>>;
   };

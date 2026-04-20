@@ -163,6 +163,30 @@ describe('heygen.generateVideo', () => {
     expect((seenBody as { video_title?: string }).video_title).toBe('Lumo render');
   });
 
+  it('sends character.type=talking_photo + talking_photo_id for trained Photo Avatars', async () => {
+    let seenBody: unknown = null;
+    mockFetch([
+      async (req) => {
+        seenBody = await req.json();
+        return jsonResponse(200, { data: { video_id: 'vid_tp' } });
+      },
+    ]);
+    await heygen.generateVideo({
+      avatarId: 'tp-123',
+      audioAssetId: 'asset-x',
+      mode: 'standard',
+      avatarKind: 'talking_photo',
+      title: 'Trained shot',
+    });
+    const body = seenBody as {
+      video_inputs: Array<{ character: { type: string; talking_photo_id?: string } }>;
+    };
+    expect(body.video_inputs[0]!.character).toEqual({
+      type: 'talking_photo',
+      talking_photo_id: 'tp-123',
+    });
+  });
+
   it('sanitises control characters, collapses whitespace, and clamps to 80 chars', async () => {
     let seenBody: unknown = null;
     mockFetch([
@@ -179,6 +203,7 @@ describe('heygen.generateVideo', () => {
     });
     const videoTitle = (seenBody as { video_title?: string }).video_title ?? '';
     expect(videoTitle.length).toBeLessThanOrEqual(80);
+    // eslint-disable-next-line no-control-regex
     expect(videoTitle).not.toMatch(/[\u0000-\u001F]/);
     expect(videoTitle.startsWith('Scene with control')).toBe(true);
   });
@@ -239,8 +264,27 @@ describe('heygen.listStockAvatars', () => {
       }),
     ]);
     expect(await heygen.listStockAvatars()).toEqual([
-      { avatarId: 'a1', name: 'Alex', tier: 'photo' },
-      { avatarId: 'a2', name: 'Priya', tier: 'photo' },
+      { avatarId: 'a1', name: 'Alex', tier: 'photo', kind: 'avatar' },
+      { avatarId: 'a2', name: 'Priya', tier: 'photo', kind: 'avatar' },
+    ]);
+  });
+
+  it('merges talking_photos (user-trained) ahead of stock avatars', async () => {
+    mockFetch([
+      jsonResponse(200, {
+        data: {
+          avatars: [{ avatar_id: 'a1', avatar_name: 'Stock One' }],
+          talking_photos: [
+            { talking_photo_id: 'tp1', talking_photo_name: 'My Face' },
+            { talking_photo_id: 'tp2' },
+          ],
+        },
+      }),
+    ]);
+    expect(await heygen.listStockAvatars()).toEqual([
+      { avatarId: 'tp1', name: 'My Face (trained)', tier: 'photo', kind: 'talking_photo' },
+      { avatarId: 'tp2', name: 'Talking photo (trained)', tier: 'photo', kind: 'talking_photo' },
+      { avatarId: 'a1', name: 'Stock One', tier: 'photo', kind: 'avatar' },
     ]);
   });
 });

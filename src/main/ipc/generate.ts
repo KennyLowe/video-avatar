@@ -55,22 +55,32 @@ export function registerGenerateIpc(): void {
   });
 
   handle('generate.run', async (input) => {
-    const { slug, scriptId, voiceId, voiceRowId, avatarId, avatarRowId, mode } = input as {
-      slug: string;
-      scriptId: number;
-      voiceId: string;
-      voiceRowId: number | null;
-      avatarId: string;
-      avatarRowId: number | null;
-      mode: GenerationMode;
-    };
+    const { slug, scriptId, voiceId, voiceRowId, avatarId, avatarRowId, avatarKind, mode } =
+      input as {
+        slug: string;
+        scriptId: number;
+        voiceId: string;
+        voiceRowId: number | null;
+        avatarId: string;
+        avatarRowId: number | null;
+        avatarKind: 'avatar' | 'talking_photo';
+        mode: GenerationMode;
+      };
     const root = requireRoot();
     const db = openProjectDb({ projectsRoot: root, slug });
     const jobs = new JobsRepository(db, root, slug);
     const job = jobs.create({
       provider: 'heygen',
       kind: 'avatar_video',
-      inputRef: JSON.stringify({ scriptId, voiceId, voiceRowId, avatarId, avatarRowId, mode }),
+      inputRef: JSON.stringify({
+        scriptId,
+        voiceId,
+        voiceRowId,
+        avatarId,
+        avatarRowId,
+        avatarKind,
+        mode,
+      }),
     });
     // Kick the handler off immediately. Intentionally not awaited — the
     // renderer gets the jobId synchronously and subscribes to status updates
