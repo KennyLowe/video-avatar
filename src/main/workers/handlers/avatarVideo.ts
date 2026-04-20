@@ -100,6 +100,7 @@ export async function runAvatarVideo(ctx: {
       avatarId: input.avatarId,
       audioAssetId,
       mode: input.mode,
+      title: script.title,
     });
     jobs.updateStatus(ctx.jobId, { providerJobId: videoJobId });
 

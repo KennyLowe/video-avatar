@@ -132,6 +132,7 @@ describe('heygen.generateVideo', () => {
       avatarId: 'av-42',
       audioAssetId: 'asset-42',
       mode: 'standard',
+      title: 'Script Title',
     });
     expect(res).toEqual({ videoJobId: 'vid_standard' });
     expect(seenBody).toEqual({
@@ -142,7 +143,44 @@ describe('heygen.generateVideo', () => {
         },
       ],
       dimension: { width: 1920, height: 1080 },
+      title: 'Script Title',
     });
+  });
+
+  it('falls back to a safe default title when none is provided', async () => {
+    let seenBody: { title?: string } | null = null;
+    mockFetch([
+      async (req) => {
+        seenBody = (await req.json()) as { title?: string };
+        return jsonResponse(200, { data: { video_id: 'vid_notitle' } });
+      },
+    ]);
+    await heygen.generateVideo({
+      avatarId: 'a',
+      audioAssetId: 'b',
+      mode: 'standard',
+    });
+    expect(seenBody?.title).toBe('Lumo render');
+  });
+
+  it('sanitises control characters, collapses whitespace, and clamps to 80 chars', async () => {
+    let seenBody: { title?: string } | null = null;
+    mockFetch([
+      async (req) => {
+        seenBody = (await req.json()) as { title?: string };
+        return jsonResponse(200, { data: { video_id: 'vid_sanitised' } });
+      },
+    ]);
+    await heygen.generateVideo({
+      avatarId: 'a',
+      audioAssetId: 'b',
+      mode: 'standard',
+      title: `Scene\n\n\twith\u0000control${'x'.repeat(200)}`,
+    });
+    const title = seenBody?.title ?? '';
+    expect(title.length).toBeLessThanOrEqual(80);
+    expect(title).not.toMatch(/[\u0000-\u001F]/);
+    expect(title.startsWith('Scene with control')).toBe(true);
   });
 
   it('hits /v2/video/av4/generate for Avatar IV', async () => {

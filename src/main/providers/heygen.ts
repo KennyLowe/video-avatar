@@ -28,6 +28,10 @@ export interface GenerateVideoArgs {
   audioAssetId: string;
   mode: GenerationMode;
   dimensions?: { width: number; height: number };
+  /** Human-readable video title. HeyGen rejects the request if this is empty
+   *  or contains disallowed characters; the provider wrapper sanitises to
+   *  a safe subset before sending. */
+  title?: string;
 }
 
 export interface VideoStatusPending {
@@ -102,6 +106,7 @@ export async function uploadAudioAsset(path: string): Promise<{ assetId: string 
 export async function generateVideo(args: GenerateVideoArgs): Promise<{ videoJobId: string }> {
   const endpoint = args.mode === 'avatar_iv' ? '/v2/video/av4/generate' : '/v2/video/generate';
   const dimensions = args.dimensions ?? { width: 1920, height: 1080 };
+  const title = sanitiseVideoTitle(args.title);
 
   const payload =
     args.mode === 'avatar_iv'
@@ -109,6 +114,7 @@ export async function generateVideo(args: GenerateVideoArgs): Promise<{ videoJob
           image_key: args.avatarId,
           audio_asset_id: args.audioAssetId,
           dimension: dimensions,
+          title,
         }
       : {
           video_inputs: [
@@ -118,6 +124,7 @@ export async function generateVideo(args: GenerateVideoArgs): Promise<{ videoJob
             },
           ],
           dimension: dimensions,
+          title,
         };
 
   const { body } = await request<HeyGenGenerateResponse>({
@@ -341,6 +348,24 @@ function mimeTypeForImage(filePath: string): string {
   if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
   if (lower.endsWith('.webp')) return 'image/webp';
   return 'image/png';
+}
+
+// HeyGen rejects titles that are empty, null, or contain characters their
+// moderation layer dislikes (observed: control chars, newlines, some
+// unicode ranges, very long strings). Collapse whitespace, strip
+// non-printable, clamp to 100 chars, fall back to a safe default.
+function sanitiseVideoTitle(input: string | undefined): string {
+  const fallback = 'Lumo render';
+  if (typeof input !== 'string') return fallback;
+  const collapsed = input
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (collapsed.length === 0) return fallback;
+  // HeyGen's title field is documented as up to 100 chars; clamp well
+  // under to stay safe across undocumented byte-length limits.
+  return collapsed.slice(0, 80);
 }
 
 export async function listStockAvatars(): Promise<StockAvatar[]> {
