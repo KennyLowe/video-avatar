@@ -148,10 +148,10 @@ describe('heygen.generateVideo', () => {
   });
 
   it('falls back to a safe default title when none is provided', async () => {
-    let seenBody: { title?: string } | null = null;
+    let seenBody: unknown = null;
     mockFetch([
       async (req) => {
-        seenBody = (await req.json()) as { title?: string };
+        seenBody = await req.json();
         return jsonResponse(200, { data: { video_id: 'vid_notitle' } });
       },
     ]);
@@ -160,14 +160,14 @@ describe('heygen.generateVideo', () => {
       audioAssetId: 'b',
       mode: 'standard',
     });
-    expect(seenBody?.title).toBe('Lumo render');
+    expect((seenBody as { title?: string }).title).toBe('Lumo render');
   });
 
   it('sanitises control characters, collapses whitespace, and clamps to 80 chars', async () => {
-    let seenBody: { title?: string } | null = null;
+    let seenBody: unknown = null;
     mockFetch([
       async (req) => {
-        seenBody = (await req.json()) as { title?: string };
+        seenBody = await req.json();
         return jsonResponse(200, { data: { video_id: 'vid_sanitised' } });
       },
     ]);
@@ -177,7 +177,7 @@ describe('heygen.generateVideo', () => {
       mode: 'standard',
       title: `Scene\n\n\twith\u0000control${'x'.repeat(200)}`,
     });
-    const title = seenBody?.title ?? '';
+    const title = (seenBody as { title?: string }).title ?? '';
     expect(title.length).toBeLessThanOrEqual(80);
     expect(title).not.toMatch(/[\u0000-\u001F]/);
     expect(title.startsWith('Scene with control')).toBe(true);
