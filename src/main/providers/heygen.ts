@@ -108,13 +108,16 @@ export async function generateVideo(args: GenerateVideoArgs): Promise<{ videoJob
   const dimensions = args.dimensions ?? { width: 1920, height: 1080 };
   const title = sanitiseVideoTitle(args.title);
 
+  // HeyGen expects the title under `video_title` on both /v2/video/generate
+  // and /v2/video/av4/generate (observed live — the API rejects a request
+  // without it with "video_title is invalid: Field required").
   const payload =
     args.mode === 'avatar_iv'
       ? {
           image_key: args.avatarId,
           audio_asset_id: args.audioAssetId,
           dimension: dimensions,
-          title,
+          video_title: title,
         }
       : {
           video_inputs: [
@@ -124,7 +127,7 @@ export async function generateVideo(args: GenerateVideoArgs): Promise<{ videoJob
             },
           ],
           dimension: dimensions,
-          title,
+          video_title: title,
         };
 
   const { body } = await request<HeyGenGenerateResponse>({

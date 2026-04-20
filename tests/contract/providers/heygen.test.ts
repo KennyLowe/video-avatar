@@ -143,7 +143,7 @@ describe('heygen.generateVideo', () => {
         },
       ],
       dimension: { width: 1920, height: 1080 },
-      title: 'Script Title',
+      video_title: 'Script Title',
     });
   });
 
@@ -160,7 +160,7 @@ describe('heygen.generateVideo', () => {
       audioAssetId: 'b',
       mode: 'standard',
     });
-    expect((seenBody as { title?: string }).title).toBe('Lumo render');
+    expect((seenBody as { video_title?: string }).video_title).toBe('Lumo render');
   });
 
   it('sanitises control characters, collapses whitespace, and clamps to 80 chars', async () => {
@@ -177,10 +177,10 @@ describe('heygen.generateVideo', () => {
       mode: 'standard',
       title: `Scene\n\n\twith\u0000control${'x'.repeat(200)}`,
     });
-    const title = (seenBody as { title?: string }).title ?? '';
-    expect(title.length).toBeLessThanOrEqual(80);
-    expect(title).not.toMatch(/[\u0000-\u001F]/);
-    expect(title.startsWith('Scene with control')).toBe(true);
+    const videoTitle = (seenBody as { video_title?: string }).video_title ?? '';
+    expect(videoTitle.length).toBeLessThanOrEqual(80);
+    expect(videoTitle).not.toMatch(/[\u0000-\u001F]/);
+    expect(videoTitle.startsWith('Scene with control')).toBe(true);
   });
 
   it('hits /v2/video/av4/generate for Avatar IV', async () => {
