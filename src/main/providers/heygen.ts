@@ -115,46 +115,33 @@ export async function uploadAudioAsset(path: string): Promise<{ assetId: string 
 }
 
 export async function generateVideo(args: GenerateVideoArgs): Promise<{ videoJobId: string }> {
-  const endpoint = args.mode === 'avatar_iv' ? '/v2/video/av4/generate' : '/v2/video/generate';
-  const dimensions = args.dimensions ?? { width: 1920, height: 1080 };
+  // v3 unifies Avatar IV, Avatar V, talking-photos, and regular avatars
+  // behind a single endpoint. HeyGen selects the right engine per
+  // avatar_id internally, so `mode` and `avatarKind` collapse at the
+  // wire layer — we keep them in the arg type for cost estimation and
+  // future-proofing, but the payload is the same either way. Avatar V
+  // avatars created on heygen.com simply come back under the right
+  // engine when we submit their avatar_id here. v2 endpoints remain
+  // supported through 2026-10-31; v3 is where all new features land.
   const title = sanitiseVideoTitle(args.title);
+  const dimensions = args.dimensions ?? { width: 1920, height: 1080 };
+  const aspect_ratio = dimensions.height > dimensions.width ? '9:16' : '16:9';
+  const resolution =
+    dimensions.height >= 2160 ? '4k' : dimensions.height >= 1080 ? '1080p' : '720p';
 
-  // HeyGen expects the title under `video_title` on both /v2/video/generate
-  // and /v2/video/av4/generate (observed live — the API rejects a request
-  // without it with "video_title is invalid: Field required").
-  //
-  // `character` shape depends on whether the avatar is a pre-built avatar
-  // or a user-trained talking_photo (Photo Avatar). Sending the wrong
-  // shape yields "Provided talking photo image <id> not found".
-  const kind = args.avatarKind ?? 'avatar';
-  const character =
-    kind === 'talking_photo'
-      ? { type: 'talking_photo', talking_photo_id: args.avatarId }
-      : { type: 'avatar', avatar_id: args.avatarId };
-
-  const payload =
-    args.mode === 'avatar_iv'
-      ? {
-          image_key: args.avatarId,
-          audio_asset_id: args.audioAssetId,
-          dimension: dimensions,
-          video_title: title,
-        }
-      : {
-          video_inputs: [
-            {
-              character,
-              voice: { type: 'audio', audio_asset_id: args.audioAssetId },
-            },
-          ],
-          dimension: dimensions,
-          video_title: title,
-        };
+  const payload = {
+    type: 'avatar' as const,
+    avatar_id: args.avatarId,
+    audio_asset_id: args.audioAssetId,
+    title,
+    resolution,
+    aspect_ratio,
+  };
 
   const { body } = await request<HeyGenGenerateResponse>({
     provider: 'heygen',
     method: 'POST',
-    url: `${BASE_URL}${endpoint}`,
+    url: `${BASE_URL}/v3/videos`,
     headers: await authedHeaders(),
     body: payload,
     timeoutMs: 60_000,
@@ -171,12 +158,15 @@ export async function generateVideo(args: GenerateVideoArgs): Promise<{ videoJob
 }
 
 export async function getVideoStatus(videoJobId: string): Promise<VideoStatus> {
-  const url = new URL(`${BASE_URL}/v1/video_status.get`);
-  url.searchParams.set('video_id', videoJobId);
+  // v3: GET /v3/videos/{id}. Response fields: data.id, data.status,
+  // data.video_url (presigned), data.failure_code, data.failure_message.
+  // The old v1 /video_status.get used `error` as the failure field;
+  // fall back to that shape too so a v2 fleet in mid-migration still
+  // surfaces useful messages.
   const { body } = await request<HeyGenStatusResponse>({
     provider: 'heygen',
     method: 'GET',
-    url: url.toString(),
+    url: `${BASE_URL}/v3/videos/${encodeURIComponent(videoJobId)}`,
     headers: await authedHeaders(),
   });
   const data = body?.data ?? body;
@@ -192,10 +182,11 @@ export async function getVideoStatus(videoJobId: string): Promise<VideoStatus> {
     return { status: 'completed', videoUrl };
   }
   if (statusRaw === 'failed' || statusRaw === 'error') {
-    return {
-      status: 'failed',
-      error: (data?.error as string | undefined) ?? 'HeyGen reported a failed render.',
-    };
+    const failure =
+      (data?.failure_message as string | undefined) ??
+      (data?.error as string | undefined) ??
+      'HeyGen reported a failed render.';
+    return { status: 'failed', error: failure };
   }
   // Treat every documented non-terminal state as one of our two internal
   // pending buckets. HeyGen has expanded this list over time — observed
@@ -466,12 +457,19 @@ interface HeyGenGenerateResponse extends HeyGenEnvelope<{ video_id?: string }> {
 }
 
 interface HeyGenStatusResponse extends HeyGenEnvelope<{
+  id?: string;
   status?: string;
   video_url?: string | null;
+  failure_code?: string | null;
+  failure_message?: string | null;
+  /** Legacy v1/v2 field kept for transitional compatibility. */
   error?: string | null;
 }> {
+  id?: string;
   status?: string;
   video_url?: string | null;
+  failure_code?: string | null;
+  failure_message?: string | null;
   error?: string | null;
 }
 

@@ -120,12 +120,14 @@ describe('heygen.uploadAudioAsset', () => {
 });
 
 describe('heygen.generateVideo', () => {
-  it('hits /v2/video/generate for Standard with the expected payload shape', async () => {
+  it('POSTs /v3/videos with type=avatar + the expected payload shape', async () => {
+    let seenUrl = '';
     let seenBody: unknown = null;
     mockFetch([
       async (req) => {
+        seenUrl = req.url;
         seenBody = await req.json();
-        return jsonResponse(200, { data: { video_id: 'vid_standard' } });
+        return jsonResponse(200, { data: { video_id: 'v_standard' } });
       },
     ]);
     const res = await heygen.generateVideo({
@@ -134,16 +136,15 @@ describe('heygen.generateVideo', () => {
       mode: 'standard',
       title: 'Script Title',
     });
-    expect(res).toEqual({ videoJobId: 'vid_standard' });
+    expect(res).toEqual({ videoJobId: 'v_standard' });
+    expect(seenUrl).toBe('https://api.heygen.com/v3/videos');
     expect(seenBody).toEqual({
-      video_inputs: [
-        {
-          character: { type: 'avatar', avatar_id: 'av-42' },
-          voice: { type: 'audio', audio_asset_id: 'asset-42' },
-        },
-      ],
-      dimension: { width: 1920, height: 1080 },
-      video_title: 'Script Title',
+      type: 'avatar',
+      avatar_id: 'av-42',
+      audio_asset_id: 'asset-42',
+      title: 'Script Title',
+      resolution: '1080p',
+      aspect_ratio: '16:9',
     });
   });
 
@@ -152,7 +153,7 @@ describe('heygen.generateVideo', () => {
     mockFetch([
       async (req) => {
         seenBody = await req.json();
-        return jsonResponse(200, { data: { video_id: 'vid_notitle' } });
+        return jsonResponse(200, { data: { video_id: 'v_notitle' } });
       },
     ]);
     await heygen.generateVideo({
@@ -160,15 +161,15 @@ describe('heygen.generateVideo', () => {
       audioAssetId: 'b',
       mode: 'standard',
     });
-    expect((seenBody as { video_title?: string }).video_title).toBe('Lumo render');
+    expect((seenBody as { title?: string }).title).toBe('Lumo render');
   });
 
-  it('sends character.type=talking_photo + talking_photo_id for trained Photo Avatars', async () => {
+  it('uses type=avatar + avatar_id regardless of avatarKind (v3 auto-selects engine)', async () => {
     let seenBody: unknown = null;
     mockFetch([
       async (req) => {
         seenBody = await req.json();
-        return jsonResponse(200, { data: { video_id: 'vid_tp' } });
+        return jsonResponse(200, { data: { video_id: 'v_tp' } });
       },
     ]);
     await heygen.generateVideo({
@@ -178,13 +179,9 @@ describe('heygen.generateVideo', () => {
       avatarKind: 'talking_photo',
       title: 'Trained shot',
     });
-    const body = seenBody as {
-      video_inputs: Array<{ character: { type: string; talking_photo_id?: string } }>;
-    };
-    expect(body.video_inputs[0]!.character).toEqual({
-      type: 'talking_photo',
-      talking_photo_id: 'tp-123',
-    });
+    // v3 collapses the v2 `character: {type: talking_photo, ...}`
+    // distinction; a talking photo is just an avatar_id on the wire.
+    expect(seenBody).toMatchObject({ type: 'avatar', avatar_id: 'tp-123' });
   });
 
   it('sanitises control characters, collapses whitespace, and clamps to 80 chars', async () => {
@@ -192,7 +189,7 @@ describe('heygen.generateVideo', () => {
     mockFetch([
       async (req) => {
         seenBody = await req.json();
-        return jsonResponse(200, { data: { video_id: 'vid_sanitised' } });
+        return jsonResponse(200, { data: { video_id: 'v_sanitised' } });
       },
     ]);
     await heygen.generateVideo({
@@ -201,21 +198,20 @@ describe('heygen.generateVideo', () => {
       mode: 'standard',
       title: `Scene\n\n\twith\u0000control${'x'.repeat(200)}`,
     });
-    const videoTitle = (seenBody as { video_title?: string }).video_title ?? '';
-    expect(videoTitle.length).toBeLessThanOrEqual(80);
+    const title = (seenBody as { title?: string }).title ?? '';
+    expect(title.length).toBeLessThanOrEqual(80);
     // eslint-disable-next-line no-control-regex
-    expect(videoTitle).not.toMatch(/[\u0000-\u001F]/);
-    expect(videoTitle.startsWith('Scene with control')).toBe(true);
+    expect(title).not.toMatch(/[\u0000-\u001F]/);
+    expect(title.startsWith('Scene with control')).toBe(true);
   });
 
-  it('hits /v2/video/av4/generate for Avatar IV', async () => {
+  it('still hits /v3/videos for Avatar IV (no more av4 endpoint)', async () => {
     let seenUrl = '';
-    let seenBody: unknown = null;
     mockFetch([
       async (req) => {
         seenUrl = req.url;
-        seenBody = await req.json();
-        return jsonResponse(200, { data: { video_id: 'vid_iv' } });
+        await req.json();
+        return jsonResponse(200, { data: { video_id: 'v_iv' } });
       },
     ]);
     const res = await heygen.generateVideo({
@@ -223,24 +219,65 @@ describe('heygen.generateVideo', () => {
       audioAssetId: 'asset-7',
       mode: 'avatar_iv',
     });
-    expect(res).toEqual({ videoJobId: 'vid_iv' });
-    expect(seenUrl).toBe('https://api.heygen.com/v2/video/av4/generate');
-    expect(seenBody).toMatchObject({ image_key: 'img-7', audio_asset_id: 'asset-7' });
+    expect(res).toEqual({ videoJobId: 'v_iv' });
+    expect(seenUrl).toBe('https://api.heygen.com/v3/videos');
+  });
+
+  it('derives resolution + aspect_ratio from dimensions', async () => {
+    let seenBody: unknown = null;
+    mockFetch([
+      async (req) => {
+        seenBody = await req.json();
+        return jsonResponse(200, { data: { video_id: 'v_dim' } });
+      },
+    ]);
+    await heygen.generateVideo({
+      avatarId: 'a',
+      audioAssetId: 'b',
+      mode: 'standard',
+      dimensions: { width: 1080, height: 1920 },
+    });
+    expect(seenBody).toMatchObject({ resolution: '1080p', aspect_ratio: '9:16' });
   });
 });
 
 describe('heygen.getVideoStatus', () => {
-  it('normalises completed with a video URL', async () => {
+  it('hits GET /v3/videos/{id} and normalises completed with a video URL', async () => {
+    let seenUrl = '';
     mockFetch([
-      jsonResponse(200, {
-        data: { status: 'completed', video_url: 'https://cdn.heygen.com/out.mp4' },
-      }),
+      async (req) => {
+        seenUrl = req.url;
+        return jsonResponse(200, {
+          data: {
+            id: 'v_abc',
+            status: 'completed',
+            video_url: 'https://cdn.heygen.com/out.mp4',
+          },
+        });
+      },
     ]);
-    const res = await heygen.getVideoStatus('vid-1');
+    const res = await heygen.getVideoStatus('v_abc');
+    expect(seenUrl).toBe('https://api.heygen.com/v3/videos/v_abc');
     expect(res).toEqual({ status: 'completed', videoUrl: 'https://cdn.heygen.com/out.mp4' });
   });
 
-  it('normalises failed', async () => {
+  it('normalises failed with failure_message (v3)', async () => {
+    mockFetch([
+      jsonResponse(200, {
+        data: {
+          status: 'failed',
+          failure_code: 'rendering_failed',
+          failure_message: 'Avatar rendering timed out',
+        },
+      }),
+    ]);
+    expect(await heygen.getVideoStatus('vid-2')).toEqual({
+      status: 'failed',
+      error: 'Avatar rendering timed out',
+    });
+  });
+
+  it('falls back to legacy `error` field for v1/v2 status responses', async () => {
     mockFetch([jsonResponse(200, { data: { status: 'failed', error: 'gpu busy' } })]);
     expect(await heygen.getVideoStatus('vid-2')).toEqual({ status: 'failed', error: 'gpu busy' });
   });
